@@ -1,0 +1,15 @@
+{
+  "name": "examples",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "Examples for hawk-tracker SDK",
+  "scripts": {
+    "dev": "node test.js",
+    "build": "echo 'No build needed for examples'"
+  },
+  "dependencies": {
+    "@hawk-tracker/core": "workspace:*",
+    "@hawk-tracker/plugin-error": "workspace:*"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+      "build": {
+          "dependsOn": ["^build"],
+          "inputs": [
+              "src/**/*.ts",
+              "src/**/*.js",
+              "package.json",
+              "tsconfig.json",
+              "rollup.config.mjs"
+          ],
+          "outputs": ["dist/**"]
+      },
+      "lint": {
+          "inputs": [
+              "src/**/*.ts",
+              "src/**/*.js"
+          ],
+          "outputs": []
+      },
+      "lint:fix": {
+          "inputs": [
+              "src/**/*.ts", 
+              "src/**/*.js"
+          ],
+          "outputs": []
+      },
+      "test": {
+          "dependsOn": ["build"],
+          "inputs": [
+              "src/**/*.ts",
+              "src/**/*.js",
+              "__test__/**/*"
+          ],
+          "outputs": ["coverage/**"]
+      },
+      "dev": {
+          "cache": false,
+          "persistent": true
+      },
+      "clean": {
+          "cache": false
+      }
+  }
+}

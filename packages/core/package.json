@@ -1,0 +1,37 @@
+{
+  "name": "@hawk-tracker/core",
+  "version": "0.0.0",
+  "private": false,
+  "type": "module",
+  "description": "Core module for the web SDK",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "lint": "eslint \"src/**/*.{ts,js}\"",
+    "lint:fix": "eslint \"src/**/*.{ts,js}\" --fix",
+    "test": "jest",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "sdk",
+    "core"
+  ],
+  "author": "",
+  "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    
+  }
+}
