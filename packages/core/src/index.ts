@@ -39,7 +39,7 @@ function use(plugin: any, option: any) {
   });
 }
 
-export default{ init, use };
+export { init, use };
 // 统一导出
 export * from './types';
 export * from './utils';

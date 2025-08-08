@@ -31,7 +31,10 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
-    
+  "devDependencies": {
+    "@workspace/build-config": "workspace:*",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "rollup": "^4.46.2"
   }
 }

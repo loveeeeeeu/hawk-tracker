@@ -1,0 +1,41 @@
+{
+  "name": "@workspace/build-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base": "./base.js",
+    "./server": "./server.js",
+    "./web": "./web.js",
+    "./dependency-dev": {
+      "import": "./base.js",
+      "require": "./base.js"
+    },
+    "./dependency-prod": {
+      "import": "./base.js",
+      "require": "./base.js"
+    }
+  },
+  "peerDependenciesMeta": {
+    "rollup": {
+      "optional": false
+    }
+  },
+  "peerDependencies": {
+    "rollup": "^4.46.2"
+  },
+  "dependencies": {
+    "@babel/preset-react": "^7.26.3",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.4",
+    "rollup-plugin-dts": "^6.2.1",
+    "rollup-plugin-postcss": "^4.0.2"
+  },
+  "devDependencies": {
+    "rollup": "^4.46.2"
+  }
+}
