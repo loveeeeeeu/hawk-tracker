@@ -1,0 +1,19 @@
+{
+  "extends": "@workspace/typescript-config/web.json",
+  "include": [
+    "**/*",
+    "**/.server/**/*",
+    "**/.client/**/*",
+    ".react-router/types/**/*"
+  ],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "types": ["node", "vite/client"],
+    "paths": {
+      "@/*": ["./app/*"],
+      "@workspace/ui/*": ["../../packages/ui/src/*"],
+    }
+  },
+  "exclude": ["node_modules"]
+}
+

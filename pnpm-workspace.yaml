@@ -1,4 +1,11 @@
 packages:
-  - 'packages/*'
-  - 'examples'
-  - 'apps/*'
+  - packages/**/*
+  - examples/*
+  - apps/*
+
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - '@tailwindcss/oxide'
+  - core-js-pure
+  - esbuild
+  - prisma

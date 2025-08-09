@@ -3,44 +3,48 @@
   "tasks": {
       "build": {
           "dependsOn": ["^build"],
-          "inputs": [
-              "src/**/*.ts",
-              "src/**/*.js",
-              "package.json",
-              "tsconfig.json",
-              "rollup.config.mjs"
-          ],
+          "inputs": ["$TURBO_DEFAULT$", ".env*"],
+          "outputs": ["dist/**", "build/**"]
+      },
+      "build:packages": {
+          "dependsOn": ["^build"],
+          "inputs": ["packages/**", ".env*"],
           "outputs": ["dist/**"]
       },
+      "build:apps": {
+          "dependsOn": ["build:packages", "^build"],
+          "inputs": ["apps/**", ".env*"],
+          "outputs": ["dist/**", "build/**"]
+      },
       "lint": {
-          "inputs": [
-              "src/**/*.ts",
-              "src/**/*.js"
-          ],
-          "outputs": []
+        "dependsOn": ["^lint"]
       },
       "lint:fix": {
           "inputs": [
-              "src/**/*.ts", 
-              "src/**/*.js"
+              "**/*.ts", 
+              "**/*.js"
           ],
           "outputs": []
       },
       "test": {
           "dependsOn": ["build"],
           "inputs": [
-              "src/**/*.ts",
-              "src/**/*.js",
+              "**/*.ts",
+              "**/*.js",
               "__test__/**/*"
           ],
           "outputs": ["coverage/**"]
+      },
+      "check-types": {
+        "dependsOn": ["^check-types"]
       },
       "dev": {
           "cache": false,
           "persistent": true
       },
       "clean": {
-          "cache": false
+          "cache": false,
+          "outputs": []
       }
   }
 }
