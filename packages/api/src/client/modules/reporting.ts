@@ -15,7 +15,6 @@ export const reporting = {
   submit: (data: ReportData[]): Promise<SubmitResponseBody> => {
     return apiInstance.post('/report/submit', data);
   },
-
   /**
    * Registers event definitions with the server.
    * @param definitions - An array of EventDefinition objects.

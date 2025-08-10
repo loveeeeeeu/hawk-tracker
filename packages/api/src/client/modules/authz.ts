@@ -1,14 +1,18 @@
 import { apiInstance } from '../instance';
-import { Member, Role, CreateRolePayload, UpdateRolePayload } from '../../types';
+import {
+  Member,
+  Role,
+  CreateRolePayload,
+  UpdateRolePayload,
+} from '@/types';
+import { createPaginatedApi } from '../helpers';
 
 export const authz = {
   /**
-   * Fetches the list of members for the current workspace.
+   * Fetches a paginated list of members for the current workspace.
+   * The response includes a `.next()` method to fetch the subsequent page.
    */
-  getWorkspaceMembers: (): Promise<Member[]> => {
-    return apiInstance.get('/authz/members');
-  },
-
+  getWorkspaceMembers: createPaginatedApi<Member>('/authz/members'),
   /**
    * Invites a new member to the current workspace.
    * @param userId - The ID of the user to invite.
@@ -17,14 +21,11 @@ export const authz = {
   inviteMember: (userId: string, roleIds: string[]): Promise<void> => {
     return apiInstance.post('/authz/invites', { userId, roleIds });
   },
-
   /**
-   * Fetches all available roles in the current workspace.
+   * Fetches a paginated list of all available roles in the current workspace.
+   * The response includes a `.next()` method to fetch the subsequent page.
    */
-  getRoles: (): Promise<Role[]> => {
-    return apiInstance.get('/authz/roles');
-  },
-
+  getRoles: createPaginatedApi<Role>('/authz/roles'),
   /**
    * Creates a new custom role in the current workspace.
    * @param payload - The details of the new role.
@@ -32,7 +33,6 @@ export const authz = {
   createRole: (payload: CreateRolePayload): Promise<Role> => {
     return apiInstance.post('/authz/roles', payload);
   },
-
   /**
    * Updates an existing custom role.
    * @param roleId - The ID of the role to update.
@@ -41,7 +41,6 @@ export const authz = {
   updateRole: (roleId: string, payload: UpdateRolePayload): Promise<Role> => {
     return apiInstance.patch(`/authz/roles/${roleId}`, payload);
   },
-
   /**
    * Deletes a custom role.
    * @param roleId - The ID of the role to delete.
@@ -50,4 +49,3 @@ export const authz = {
     return apiInstance.delete(`/authz/roles/${roleId}`);
   },
 };
-

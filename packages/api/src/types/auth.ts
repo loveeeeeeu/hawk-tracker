@@ -13,8 +13,8 @@ export interface LoginPayload {
  * Summary of a user's membership in a workspace, used for switching.
  */
 export interface WorkspaceMembership {
-    workspace: Pick<Workspace, 'id' | 'name' | 'type'>;
-    roles: Pick<Role, 'id' | 'name'>[]; // User's roles in that workspace
+  workspace: Pick<Workspace, 'id' | 'name' | 'type'>;
+  roles: Pick<Role, 'id' | 'name'>[]; // User's roles in that workspace
 }
 
 /**
@@ -46,15 +46,15 @@ export interface RegisterPayload {
  * Payload for switching the active workspace.
  */
 export interface SwitchWorkspacePayload {
-    workspaceId: string;
+  workspaceId: string;
 }
 
 /**
  * Response for a successful workspace switch.
  */
 export interface SwitchWorkspaceResponse {
-    accessToken: string; // A new token scoped to the new workspace
-    permissions: Permission[]; // The user's effective, structured permissions in the new workspace
+  accessToken: string; // A new token scoped to the new workspace
+  permissions: Permission[]; // The user's effective, structured permissions in the new workspace
 }
 
 /**
