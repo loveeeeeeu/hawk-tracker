@@ -97,7 +97,7 @@ Before you submit your changes, make sure your branch is up to date:
 
 ```bash
 git fetch upstream
-git rebase upstream/main
+git rebase upstream/develop
 ```
 
 ## Push Your Branch

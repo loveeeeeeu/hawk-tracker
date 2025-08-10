@@ -22,8 +22,8 @@ export interface BaseResponse<T> {
  * Defines the structure for pagination query parameters.
  */
 export interface PaginationPayload {
-    page: number;
-    pageSize: number;
+  page: number;
+  pageSize: number;
 }
 
 /**
@@ -31,13 +31,13 @@ export interface PaginationPayload {
  * @template T The type of the items in the list.
  */
 export interface PaginatedResponse<T> {
-    list: T[];
-    total: number;
-    page: number;
-    pageSize: number;
-    /**
-     * A function to fetch the next page of results.
-     * Is undefined if there are no more pages.
-     */
-    next?: () => Promise<PaginatedResponse<T>>;
+  list: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  /**
+   * A function to fetch the next page of results.
+   * Is undefined if there are no more pages.
+   */
+  next?: () => Promise<PaginatedResponse<T>>;
 }

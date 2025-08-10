@@ -1,10 +1,5 @@
 import { apiInstance } from '../instance';
-import {
-  Member,
-  Role,
-  CreateRolePayload,
-  UpdateRolePayload,
-} from '@/types';
+import { Member, Role, CreateRolePayload, UpdateRolePayload } from '@/types';
 import { createPaginatedApi } from '../helpers';
 
 export const authz = {

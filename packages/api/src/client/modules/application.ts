@@ -1,6 +1,12 @@
 import { apiInstance } from '../instance';
 import { createPaginatedApi } from '../helpers';
-import { Application, CreateApplicationPayload, UpdateApplicationPayload, AppKeys, ReportSetting } from '../../types';
+import {
+  Application,
+  CreateApplicationPayload,
+  UpdateApplicationPayload,
+  AppKeys,
+  ReportSetting,
+} from '../../types';
 
 export const application = {
   /**
@@ -10,13 +16,18 @@ export const application = {
   /**
    * Creates a new application in the current workspace.
    */
-  createApplication: (payload: CreateApplicationPayload): Promise<Application> => {
+  createApplication: (
+    payload: CreateApplicationPayload,
+  ): Promise<Application> => {
     return apiInstance.post('/applications', payload);
   },
   /**
    * Updates an existing application.
    */
-  updateApplication: (appId: string, payload: UpdateApplicationPayload): Promise<Application> => {
+  updateApplication: (
+    appId: string,
+    payload: UpdateApplicationPayload,
+  ): Promise<Application> => {
     return apiInstance.patch(`/applications/${appId}`, payload);
   },
   /**
@@ -47,7 +58,10 @@ export const application = {
   /**
    * Updates the data collection settings for a specific application.
    */
-  updateApplicationSettings: (appId: string, settings: ReportSetting[]): Promise<ReportSetting[]> => {
+  updateApplicationSettings: (
+    appId: string,
+    settings: ReportSetting[],
+  ): Promise<ReportSetting[]> => {
     return apiInstance.put(`/applications/${appId}/settings`, { settings });
   },
 };
