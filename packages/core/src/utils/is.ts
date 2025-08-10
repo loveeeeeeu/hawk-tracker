@@ -76,3 +76,6 @@ export function isEmpty(wat: any): boolean {
 export function isExistProperty(obj: object, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(obj, key);
 }
+export function isValidKey(key: string, obj: object): boolean {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+}

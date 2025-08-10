@@ -1,45 +1,67 @@
-import { InitOptions } from './types/options';
-import { subscribeEvent } from './lib/eventCenter';
-import { dataSender } from './lib/dataSender';
+import { InternalConfig } from './types/options';
+import { EventCenter,eventCenter } from './lib/eventCenter';
+import { DataSender, } from './lib/dataSender';
+import { initReplace } from './lib/AOPFactory';
 import { nativeTryCatch } from './utils/exceptions';
+import { BasePlugin } from './types/plugin';
+import { setConfig,getConfig } from './common/config';
+import { initBaseInfo } from './common/base';
+import { setGlobalHawkTracker, getGlobalHawkTracker } from './utils/global';
 
-function init(options: InitOptions) {
-  if (!options.dsn || !options.apikey) {
-    return console.error(
-      `RMonitor 缺少配置项：${!options.dsn ? 'dns(上报地址)' : ''} ${!options.apikey ? 'id(项目id)' : ''}`,
-    );
+export class HawkTracker {
+  config: InternalConfig; // 配置项
+  dataSender: DataSender;
+  eventCenter: EventCenter;
+  // plugins: BasePlugin[];
+  baseInfo: any;
+  // configManager: ConfigManager;
+
+  constructor(configs: InternalConfig) {
+    setConfig(configs)
+    this.config = getConfig()
+    this.dataSender = new DataSender({
+      dsn: configs.dsn,
+      sampleRate: configs.sampleRate,
+      debug: configs.debug,
+      // ... 其他 DataSender 需要的配置
+    });
+    this.eventCenter = eventCenter
+    // 延迟到全局实例设置后再初始化 AOP
+    // initReplace()
+    // this.baseInfo = initBaseInfo(configs)
+    // this.plugins = []
+    // this.runtimeContext = new RuntimeContext()
   }
-  //关闭监控
-  if (options.disable) return;
 
-  // handleOptions(options)
-  // setupReplace();
+  /**
+   * 初始化 AOP 拦截
+   * 需要在全局实例设置后调用
+   */
+  initAOP() {
+    initReplace()
+  }
+
+  public use(plugin: any, option: any) {
+    const instance = new plugin(option);
+    nativeTryCatch(() => {
+      instance.install(this);
+    });
+    return this
+  }
+
+  public track(type: string, data: any,isImmediate: boolean = true) {
+    this.dataSender.sendData(type, data, isImmediate);
+  }
 }
 
-/**
- * 支持自定义插件
- * @param plugin
- * @param option
- * @returns
- */
-function use(plugin: any, option: any) {
-  const instance = new plugin(option);
-  if (
-    !subscribeEvent({
-      callback: (data) => {
-        instance.transform(data);
-      },
-      type: instance.type,
-    })
-  )
-    return;
-
-  nativeTryCatch(() => {
-    instance.core({ dataSender, option, subscribeEvent });
-  });
+export function init(configs: InternalConfig) {
+  const instance = new HawkTracker(configs)
+  setGlobalHawkTracker(instance)
+  // 在设置全局实例后初始化 AOP，因为要用到全局实例
+  initReplace()
+  return getGlobalHawkTracker()
 }
 
-export { init, use };
 // 统一导出
 export * from './types';
 export * from './utils';

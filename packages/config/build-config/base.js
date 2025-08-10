@@ -1,6 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import { dts } from 'rollup-plugin-dts';
 
 /**
  * Base Rollup configuration creator
@@ -41,6 +42,7 @@ export function createBaseRollupConfig(options) {
 
 /**
  * 通用依赖打包配置 - Development版本
+ * 修改：确保正确生成类型声明文件
  */
 export function createDependencyBundleConfigDev(pkg, options = {}) {
   const {
@@ -50,7 +52,7 @@ export function createDependencyBundleConfigDev(pkg, options = {}) {
     tsconfig = './tsconfig.json',
   } = options;
 
-  return {
+  const mainConfig = {
     input,
     output: [
       {
@@ -58,11 +60,13 @@ export function createDependencyBundleConfigDev(pkg, options = {}) {
         format: 'cjs',
         sourcemap: true,
         exports: 'auto',
+        inlineDynamicImports: true,
       },
       {
         file: pkg.module,
         format: 'es',
         sourcemap: true,
+        inlineDynamicImports: true,
       },
     ],
     plugins: [
@@ -96,10 +100,32 @@ export function createDependencyBundleConfigDev(pkg, options = {}) {
       clearScreen: false,
     },
   };
+
+  // 如果有 types 字段，返回数组配置（主配置 + 类型声明配置）
+  if (pkg.types) {
+    return [
+      mainConfig,
+      {
+        input,
+        output: [{ 
+          file: pkg.types, 
+          format: 'esm' 
+        }],
+        plugins: [dts()],
+        external: [
+          ...Object.keys(pkg.peerDependencies || {}),
+          ...additionalExternal,
+        ],
+      }
+    ];
+  }
+
+  return mainConfig;
 }
 
 /**
  * 通用依赖打包配置 - Production版本
+ * 修改：确保正确生成类型声明文件
  */
 export function createDependencyBundleConfigProd(pkg, options = {}) {
   const {
@@ -133,11 +159,7 @@ export function createDependencyBundleConfigProd(pkg, options = {}) {
     ...additionalPlugins,
   ];
 
-  // Note: For minification, pass terser plugin through additionalPlugins
-  // Example: import terser from '@rollup/plugin-terser'; 
-  // createDependencyBundleConfigProd(pkg, { minify: true, additionalPlugins: [terser()] })
-
-  return {
+  const mainConfig = {
     input,
     output: [
       {
@@ -145,11 +167,13 @@ export function createDependencyBundleConfigProd(pkg, options = {}) {
         format: 'cjs',
         sourcemap: false,
         exports: 'auto',
+        inlineDynamicImports: true,
       },
       {
         file: pkg.module,
         format: 'es',
         sourcemap: false,
+        inlineDynamicImports: true,
       },
     ],
     plugins,
@@ -158,19 +182,63 @@ export function createDependencyBundleConfigProd(pkg, options = {}) {
       ...additionalExternal,
     ],
   };
+
+  // 如果有 types 字段，返回数组配置（主配置 + 类型声明配置）
+  if (pkg.types) {
+    return [
+      mainConfig,
+      {
+        input,
+        output: [{ 
+          file: pkg.types, 
+          format: 'esm' 
+        }],
+        plugins: [dts()],
+        external: [
+          ...Object.keys(pkg.peerDependencies || {}),
+          ...additionalExternal,
+        ],
+      }
+    ];
+  }
+
+  return mainConfig;
 }
 
 /**
  * 兼容性配置函数 - 自动选择dev/prod版本
+ * 修改：确保正确生成类型声明文件
  */
 export function createRollupConfig(pkg, options = {}) {
   const isDev = process.env.NODE_ENV === 'development' || process.env.ROLLUP_WATCH;
   
-  if (isDev) {
-    return createDependencyBundleConfigDev(pkg, options);
-  } else {
-    return createDependencyBundleConfigProd(pkg, options);
+  const baseConfig = isDev 
+    ? createDependencyBundleConfigDev(pkg, options)
+    : createDependencyBundleConfigProd(pkg, options);
+
+  // 确保有类型声明文件的配置
+  if (pkg.types && !Array.isArray(baseConfig)) {
+    // 如果返回的不是数组，转换为数组并添加类型声明配置
+    return [
+      baseConfig,
+      // 添加专门的类型声明文件构建配置
+      {
+        input: options.input || 'src/index.ts',
+        output: [{ 
+          file: pkg.types, 
+          format: 'esm' 
+        }],
+        plugins: [dts()],
+        external: [
+          ...Object.keys(pkg.dependencies || {}),
+          ...Object.keys(pkg.peerDependencies || {}),
+          ...(options.additionalExternal || []),
+        ],
+      }
+    ];
   }
+
+  return baseConfig;
 }
 
 /**
@@ -193,6 +261,7 @@ export function createMultiFormatDependencyConfig(pkg, options = {}) {
       format: 'cjs',
       sourcemap: true,
       exports: 'auto',
+      inlineDynamicImports: true, // 内联动态导入
     });
   }
   
@@ -201,6 +270,7 @@ export function createMultiFormatDependencyConfig(pkg, options = {}) {
       file: pkg.module,
       format: 'es',
       sourcemap: true,
+      inlineDynamicImports: true, // 内联动态导入
     });
   }
   
@@ -210,10 +280,11 @@ export function createMultiFormatDependencyConfig(pkg, options = {}) {
       format: 'umd',
       name: pkg.name.replace(/[@\-]/g, ''),
       sourcemap: true,
+      inlineDynamicImports: true, // 内联动态导入
     });
   }
 
-  return {
+  return [{
     input,
     output: outputs,
     plugins: [
@@ -242,5 +313,6 @@ export function createMultiFormatDependencyConfig(pkg, options = {}) {
       ...Object.keys(pkg.peerDependencies || {}),
       ...additionalExternal,
     ],
-  };
+  },
+];
 }

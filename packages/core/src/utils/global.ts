@@ -1,55 +1,86 @@
 import { isWindow } from './is';
-import { HawkTracker } from '../types/core';
 
 /**
- * 是否为浏览器环境
+ * 安全地获取全局对象
+ * 在浏览器环境返回 window，在 Node.js 环境返回模拟对象
  */
-export const isBrowserEnv = isWindow(
-  typeof window !== 'undefined' ? window : 0,
-);
-
-/**
- * 是否为 electron 环境
- */
-export const isElectronEnv = !!(window as any)?.process?.versions?.electron;
-
-/**
- * 是否为测试环境
- */
-export const isTestEnv =
-  (typeof navigator !== 'undefined' && navigator.userAgent.includes('jsdom')) ||
-  // @ts-expect-error: jsdom
-  (typeof window !== 'undefined' && window.jsdom);
-
-/**
- * 获取全局变量
- */
-export function getGlobal(): Window {
-  if (isBrowserEnv || isElectronEnv || isTestEnv) return window;
-  return {} as Window;
+function getGlobalObject(): any {
+  // 浏览器环境
+  if (typeof window !== 'undefined') {
+    return window;
+  }
+  
+  // Node.js 环境，返回一个模拟的 window 对象
+  if (typeof global !== 'undefined') {
+    // 如果 global 上已经有模拟的 window，直接返回
+    if ((global as any).__mockWindow) {
+      return (global as any).__mockWindow;
+    }
+    
+    // 创建模拟的 window 对象
+    const mockWindow = {
+      // 基本属性
+      document: {},
+      navigator: { userAgent: 'Node.js' },
+      location: { href: 'about:blank' },
+      
+      // HawkTracker 相关属性
+      hawkTracker: undefined,
+      _hawkTrackerInit_: false,
+      
+      // 基本方法
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      setTimeout: global.setTimeout,
+      clearTimeout: global.clearTimeout,
+      setInterval: global.setInterval,
+      clearInterval: global.clearInterval,
+    };
+    
+    // 缓存模拟对象
+    (global as any).__mockWindow = mockWindow;
+    return mockWindow;
+  }
+  
+  // 其他环境兜底
+  return {};
 }
 
-// 延迟初始化全局变量，避免循环依赖
-const _global = getGlobal();
+// 使用安全的全局对象
+const _global = getGlobalObject();
 
 /**
- * 获取全部变量 __hawkTracker__ 的引用地址
+ * 设置全局 HawkTracker 实例
+ * @param instance HawkTracker实例
  */
-export function getGlobalSupport() {
-  _global['_hawkTracker'] = _global['_hawkTracker'] || ({} as HawkTracker);
-  return _global['_hawkTracker'];
+export function setGlobalHawkTracker(instance: any): void {
+  _global.hawkTracker = instance;
+  // 同时设置初始化标记
+  _global._hawkTrackerInit_ = true;
 }
 
-// 延迟初始化 support 对象
-const _support = getGlobalSupport();
+/**
+ * 获取全局 HawkTracker 实例
+ * @returns HawkTracker实例或undefined
+ */
+export function getGlobalHawkTracker(): any {
+  return _global.hawkTracker;
+}
 
 /**
  * 判断sdk是否初始化
  * @returns sdk是否初始化
  */
 export function isInit(): boolean {
-  const global = _global as unknown as { _hawkTrackerInit__?: boolean };
-  return !!global._hawkTrackerInit__;
+  return !!_global.hawkTracker;
 }
 
-export { _global, _support };
+/**
+ * 判断是否为浏览器环境
+ */
+export function isBrowserEnv(): boolean {
+  return typeof window !== 'undefined';
+}
+
+const $sdkInstance = getGlobalHawkTracker()
+export { _global, $sdkInstance };
