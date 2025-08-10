@@ -68,20 +68,20 @@ pnpm dev
 ## 📖 使用方法
 
 ```typescript
-import hawkTracker from '@hawk-tracker/core'
-import { ErrorPlugin } from '@hawk-tracker/plugin-error'
-import { PerformancePlugin } from '@hawk-tracker/plugin-performance'
+import hawkTracker from '@hawk-tracker/core';
+import { ErrorPlugin } from '@hawk-tracker/plugin-error';
+import { PerformancePlugin } from '@hawk-tracker/plugin-performance';
 
 // 初始化 SDK
 hawkTracker.init({
   dsn: 'https://your-server.com/api/collect',
   apikey: 'your-api-key',
-  debug: true
-})
+  debug: true,
+});
 
 // 注册插件
-hawkTracker.use(ErrorPlugin)
-hawkTracker.use(PerformancePlugin)
+hawkTracker.use(ErrorPlugin);
+hawkTracker.use(PerformancePlugin);
 ```
 
 ## 🧪 开发指南
@@ -118,15 +118,15 @@ pnpm test --filter=@hawk-tracker/core
 
 ## 📝 脚本命令
 
-| 命令 | 描述 |
-|------|------|
-| `pnpm build` | 构建所有包 |
-| `pnpm dev` | 开发模式 |
-| `pnpm lint` | 代码检查 |
+| 命令            | 描述             |
+| --------------- | ---------------- |
+| `pnpm build`    | 构建所有包       |
+| `pnpm dev`      | 开发模式         |
+| `pnpm lint`     | 代码检查         |
 | `pnpm lint:fix` | 自动修复代码问题 |
-| `pnpm test` | 运行测试 |
-| `pnpm clean` | 清理构建产物 |
-| `pnpm release` | 发布新版本 |
+| `pnpm test`     | 运行测试         |
+| `pnpm clean`    | 清理构建产物     |
+| `pnpm release`  | 发布新版本       |
 
 ## 🤝 贡献指南
 
@@ -142,4 +142,4 @@ pnpm test --filter=@hawk-tracker/core
 
 ## 🙋‍♂️ 支持
 
-如有问题，请创建 [Issue](../../issues) 或联系开发团队。 
+如有问题，请创建 [Issue](../../issues) 或联系开发团队。

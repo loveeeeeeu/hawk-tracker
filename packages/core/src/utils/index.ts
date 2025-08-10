@@ -1,4 +1,4 @@
-// export * from './common';
+export * from './common';
 export * from './debug';
 export * from './global';
 export * from './is';

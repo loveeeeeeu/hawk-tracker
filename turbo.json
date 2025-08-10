@@ -1,50 +1,43 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
-      "build": {
-          "dependsOn": ["^build"],
-          "inputs": ["$TURBO_DEFAULT$", ".env*"],
-          "outputs": ["dist/**", "build/**"]
-      },
-      "build:packages": {
-          "dependsOn": ["^build"],
-          "inputs": ["packages/**", ".env*"],
-          "outputs": ["dist/**"]
-      },
-      "build:apps": {
-          "dependsOn": ["build:packages", "^build"],
-          "inputs": ["apps/**", ".env*"],
-          "outputs": ["dist/**", "build/**"]
-      },
-      "lint": {
-        "dependsOn": ["^lint"]
-      },
-      "lint:fix": {
-          "inputs": [
-              "**/*.ts", 
-              "**/*.js"
-          ],
-          "outputs": []
-      },
-      "test": {
-          "dependsOn": ["build"],
-          "inputs": [
-              "**/*.ts",
-              "**/*.js",
-              "__test__/**/*"
-          ],
-          "outputs": ["coverage/**"]
-      },
-      "check-types": {
-        "dependsOn": ["^check-types"]
-      },
-      "dev": {
-          "cache": false,
-          "persistent": true
-      },
-      "clean": {
-          "cache": false,
-          "outputs": []
-      }
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist/**", "build/**"]
+    },
+    "build:packages": {
+      "dependsOn": ["^build"],
+      "inputs": ["packages/**", ".env*"],
+      "outputs": ["dist/**"]
+    },
+    "build:apps": {
+      "dependsOn": ["build:packages", "^build"],
+      "inputs": ["apps/**", ".env*"],
+      "outputs": ["dist/**", "build/**"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "lint:fix": {
+      "inputs": ["**/*.ts", "**/*.js"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "inputs": ["**/*.ts", "**/*.js", "__test__/**/*"],
+      "outputs": ["coverage/**"]
+    },
+    "check-types": {
+      "dependsOn": ["^check-types"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "clean": {
+      "cache": false,
+      "outputs": []
+    }
   }
 }
