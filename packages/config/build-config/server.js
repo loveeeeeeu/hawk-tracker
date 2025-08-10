@@ -7,10 +7,27 @@ export function createServerRollupConfig(options) {
 
   // Default server externals - common Node.js modules
   const defaultServerExternals = [
-    'fs', 'path', 'http', 'https', 'url', 'os', 'crypto', 'stream', 'events',
-    'util', 'querystring', 'zlib', 'buffer', 'net', 'tls', 'child_process',
+    'fs',
+    'path',
+    'http',
+    'https',
+    'url',
+    'os',
+    'crypto',
+    'stream',
+    'events',
+    'util',
+    'querystring',
+    'zlib',
+    'buffer',
+    'net',
+    'tls',
+    'child_process',
     // Common server dependencies
-    'koa', 'koa-router', 'express', 'fastify'
+    'koa',
+    'koa-router',
+    'express',
+    'fastify',
   ];
 
   const serverExternal = [...defaultServerExternals, ...external];
@@ -21,8 +38,8 @@ export function createServerRollupConfig(options) {
     external: serverExternal,
     plugins: [
       json(), // Add JSON plugin for server builds
-      ...additionalPlugins
-    ]
+      ...additionalPlugins,
+    ],
   });
 
   return [

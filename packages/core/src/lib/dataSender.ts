@@ -1,19 +1,19 @@
-import pako from 'pako'
+import pako from 'pako';
 import { _global } from '../utils';
 import { log } from '../utils/debug';
 
 // 定义上报数据的类型
 type ReportData = {
   // 数据类型，如 'error', 'performance', 'behavior'
-  type: string; 
+  type: string;
   // 实际数据
-  data: any;    
+  data: any;
   // 时间戳
-  timestamp: number; 
+  timestamp: number;
   // 基础信息，如页面 URL、会话 ID 等
-  baseInfo: Record<string, any>; 
+  baseInfo: Record<string, any>;
   // 是否需要立即上报，用于高优先级数据
-  isImmediate: boolean; 
+  isImmediate: boolean;
   // 当前重试次数
   retryCount: number;
 };
@@ -39,7 +39,11 @@ export class DataSender {
   // 当前进行中的请求数
   private concurrentRequests = 0;
   // 日志方法
-  private readonly log: (level: 'info' | 'warn' | 'error', message: string, ...args: any[]) => void;
+  private readonly log: (
+    level: 'info' | 'warn' | 'error',
+    message: string,
+    ...args: any[]
+  ) => void;
 
   constructor(config: SenderConfig) {
     // 设置默认配置并合并
@@ -58,13 +62,13 @@ export class DataSender {
     } else {
       this.log = () => {};
     }
-    
+
     // 初始化时从本地存储恢复数据
     this.restoreFromLocalStorage();
 
     // 监听网络变化和页面卸载
     this.setupEventListeners();
-    
+
     // 启动定时上报
     this.startScheduler();
   }
@@ -76,7 +80,7 @@ export class DataSender {
       this.log('info', `Data dropped due to sampling:`, data);
       return;
     }
-    
+
     // 封装基础信息
     const reportData: ReportData = {
       type,
@@ -86,7 +90,7 @@ export class DataSender {
       isImmediate,
       retryCount: 0,
     };
-    
+
     // 将数据入队
     this.queue.push(reportData);
     this.log('info', `Added data to queue:`, reportData);
@@ -119,7 +123,10 @@ export class DataSender {
   private async flush(): Promise<void> {
     // 并发控制：如果正在进行的请求数已达上限，则等待
     if (this.concurrentRequests >= this.config.maxConcurrentRequests) {
-      this.log('warn', `Reached max concurrent requests (${this.config.maxConcurrentRequests}), waiting...`);
+      this.log(
+        'warn',
+        `Reached max concurrent requests (${this.config.maxConcurrentRequests}), waiting...`,
+      );
       return;
     }
 
@@ -130,9 +137,12 @@ export class DataSender {
 
     // 从队列头部取出一定数量的数据
     const dataToSend = this.queue.splice(0, this.config.batchSize);
-    
+
     this.concurrentRequests++;
-    this.log('info', `Flushing ${dataToSend.length} items from queue. Concurrent requests: ${this.concurrentRequests}`);
+    this.log(
+      'info',
+      `Flushing ${dataToSend.length} items from queue. Concurrent requests: ${this.concurrentRequests}`,
+    );
 
     try {
       await this.transport(dataToSend);
@@ -140,36 +150,42 @@ export class DataSender {
     } catch (error) {
       // 失败时，将数据放回队列，并增加重试次数
       this.log('error', `Failed to send data, error:`, error);
-      dataToSend.forEach(item => item.retryCount++);
+      dataToSend.forEach((item) => item.retryCount++);
       this.queue.unshift(...dataToSend); // 将数据重新放回队列头部
     } finally {
       this.concurrentRequests--;
     }
-    
+
     // 如果队列中还有数据，立即再次尝试上报
     if (this.queue.length > 0) {
       this.flush();
     }
   }
-  
+
   // 传输通道，选择最合适的传输方式
   private async transport(data: ReportData[]): Promise<void> {
     const payload = JSON.stringify(data);
-    
+
     // 使用 pako 进行 gzip 压缩
     const compressedPayload = pako.gzip(payload);
 
     // 根据网络状态决定是否发送
     if (!navigator.onLine) {
-        throw new Error('Network is offline, suspending transport.');
+      throw new Error('Network is offline, suspending transport.');
     }
 
     // 数据大小超过 64KB，sendBeacon 降级到 fetch
     if (compressedPayload.length > 64 * 1024) {
-      this.log('warn', `Payload size exceeds sendBeacon limit, falling back to fetch.`);
+      this.log(
+        'warn',
+        `Payload size exceeds sendBeacon limit, falling back to fetch.`,
+      );
       await fetch(this.config.dsn, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Content-Encoding': 'gzip' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Encoding': 'gzip',
+        },
         body: compressedPayload,
       });
     } else {
@@ -185,7 +201,10 @@ export class DataSender {
       if (storedData) {
         this.queue = JSON.parse(storedData);
         localStorage.removeItem(this.config.offlineStorageKey);
-        this.log('info', `Restored ${this.queue.length} items from offline storage.`);
+        this.log(
+          'info',
+          `Restored ${this.queue.length} items from offline storage.`,
+        );
       }
     } catch (e) {
       this.log('error', 'Failed to restore data from localStorage:', e);
@@ -200,7 +219,7 @@ export class DataSender {
       this.flush(); // 立即上报积压的数据
       this.startScheduler(); // 重新启动定时器
     });
-    
+
     // 监听网络断开
     window.addEventListener('offline', () => {
       this.log('warn', 'Network offline, pausing scheduler.');
@@ -214,8 +233,14 @@ export class DataSender {
     window.addEventListener('beforeunload', () => {
       this.flush(); // 再次尝试清空队列
       if (this.queue.length > 0) {
-        localStorage.setItem(this.config.offlineStorageKey, JSON.stringify(this.queue));
-        this.log('info', `Saved ${this.queue.length} items to offline storage.`);
+        localStorage.setItem(
+          this.config.offlineStorageKey,
+          JSON.stringify(this.queue),
+        );
+        this.log(
+          'info',
+          `Saved ${this.queue.length} items to offline storage.`,
+        );
       }
     });
   }

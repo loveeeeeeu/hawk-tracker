@@ -22,6 +22,10 @@ export default {
 };
 
 // 初始化日志系统
-export const log = (level: 'debug' | 'info' | 'error' | 'warn', message: string, ...args: any[]) => {
+export const log = (
+  level: 'debug' | 'info' | 'error' | 'warn',
+  message: string,
+  ...args: any[]
+) => {
   console[level](`[SDK] [${level.toUpperCase()}] ${message}`, ...args);
 };

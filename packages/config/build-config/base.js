@@ -17,25 +17,25 @@ export function createBaseRollupConfig(options) {
       sourcemap: true,
       exports: 'auto',
     },
-  plugins: [
-    resolve({ 
-      preferBuiltins: true,
-      extensions: ['.js', '.ts', '.jsx', '.tsx', '.json'],
-      exportConditions: ['node', 'default']
-    }),
-    commonjs(),
-    typescript({
-      tsconfig: './tsconfig.json',
-      sourceMap: true,
-      declaration: true,
-      outputToFilesystem: true,
-      compilerOptions: {
-        module: 'ESNext',
-        moduleResolution: 'bundler'
-      }
-    }),
-    ...plugins,
-  ],
+    plugins: [
+      resolve({
+        preferBuiltins: true,
+        extensions: ['.js', '.ts', '.jsx', '.tsx', '.json'],
+        exportConditions: ['node', 'default'],
+      }),
+      commonjs(),
+      typescript({
+        tsconfig: './tsconfig.json',
+        sourceMap: true,
+        declaration: true,
+        outputToFilesystem: true,
+        compilerOptions: {
+          module: 'ESNext',
+          moduleResolution: 'bundler',
+        },
+      }),
+      ...plugins,
+    ],
     external,
   };
 }
@@ -79,13 +79,13 @@ export function createDependencyBundleConfigDev(pkg, options = {}) {
         exclude: ['**/*.test.ts', '**/*.spec.ts'],
         compilerOptions: {
           module: 'ESNext',
-          moduleResolution: 'bundler'
-        }
+          moduleResolution: 'bundler',
+        },
       }),
-      resolve({ 
+      resolve({
         preferBuiltins: true,
         exportConditions: ['node'],
-        extensions: ['.js', '.ts', '.json']
+        extensions: ['.js', '.ts', '.json'],
       }),
       commonjs({
         include: 'node_modules/**',
@@ -107,16 +107,18 @@ export function createDependencyBundleConfigDev(pkg, options = {}) {
       mainConfig,
       {
         input,
-        output: [{ 
-          file: pkg.types, 
-          format: 'esm' 
-        }],
+        output: [
+          {
+            file: pkg.types,
+            format: 'esm',
+          },
+        ],
         plugins: [dts()],
         external: [
           ...Object.keys(pkg.peerDependencies || {}),
           ...additionalExternal,
         ],
-      }
+      },
     ];
   }
 
@@ -137,7 +139,7 @@ export function createDependencyBundleConfigProd(pkg, options = {}) {
   } = options;
 
   const plugins = [
-    resolve({ 
+    resolve({
       preferBuiltins: true,
       exportConditions: ['node'],
     }),
@@ -153,8 +155,8 @@ export function createDependencyBundleConfigProd(pkg, options = {}) {
       exclude: ['**/*.test.ts', '**/*.spec.ts'],
       compilerOptions: {
         module: 'ESNext',
-        moduleResolution: 'bundler'
-      }
+        moduleResolution: 'bundler',
+      },
     }),
     ...additionalPlugins,
   ];
@@ -189,16 +191,18 @@ export function createDependencyBundleConfigProd(pkg, options = {}) {
       mainConfig,
       {
         input,
-        output: [{ 
-          file: pkg.types, 
-          format: 'esm' 
-        }],
+        output: [
+          {
+            file: pkg.types,
+            format: 'esm',
+          },
+        ],
         plugins: [dts()],
         external: [
           ...Object.keys(pkg.peerDependencies || {}),
           ...additionalExternal,
         ],
-      }
+      },
     ];
   }
 
@@ -210,9 +214,10 @@ export function createDependencyBundleConfigProd(pkg, options = {}) {
  * 修改：确保正确生成类型声明文件
  */
 export function createRollupConfig(pkg, options = {}) {
-  const isDev = process.env.NODE_ENV === 'development' || process.env.ROLLUP_WATCH;
-  
-  const baseConfig = isDev 
+  const isDev =
+    process.env.NODE_ENV === 'development' || process.env.ROLLUP_WATCH;
+
+  const baseConfig = isDev
     ? createDependencyBundleConfigDev(pkg, options)
     : createDependencyBundleConfigProd(pkg, options);
 
@@ -224,17 +229,19 @@ export function createRollupConfig(pkg, options = {}) {
       // 添加专门的类型声明文件构建配置
       {
         input: options.input || 'src/index.ts',
-        output: [{ 
-          file: pkg.types, 
-          format: 'esm' 
-        }],
+        output: [
+          {
+            file: pkg.types,
+            format: 'esm',
+          },
+        ],
         plugins: [dts()],
         external: [
           ...Object.keys(pkg.dependencies || {}),
           ...Object.keys(pkg.peerDependencies || {}),
           ...(options.additionalExternal || []),
         ],
-      }
+      },
     ];
   }
 
@@ -254,7 +261,7 @@ export function createMultiFormatDependencyConfig(pkg, options = {}) {
   } = options;
 
   const outputs = [];
-  
+
   if (formats.includes('cjs') && pkg.main) {
     outputs.push({
       file: pkg.main,
@@ -264,7 +271,7 @@ export function createMultiFormatDependencyConfig(pkg, options = {}) {
       inlineDynamicImports: true, // 内联动态导入
     });
   }
-  
+
   if (formats.includes('es') && pkg.module) {
     outputs.push({
       file: pkg.module,
@@ -273,7 +280,7 @@ export function createMultiFormatDependencyConfig(pkg, options = {}) {
       inlineDynamicImports: true, // 内联动态导入
     });
   }
-  
+
   if (formats.includes('umd') && pkg.browser) {
     outputs.push({
       file: pkg.browser,
@@ -284,35 +291,36 @@ export function createMultiFormatDependencyConfig(pkg, options = {}) {
     });
   }
 
-  return [{
-    input,
-    output: outputs,
-    plugins: [
-      resolve({ 
-        preferBuiltins: true,
-        browser: formats.includes('umd'),
-      }),
-      commonjs({
-        include: 'node_modules/**',
-      }),
-      typescript({
-        tsconfig,
-        sourceMap: true,
-        declaration: true,
-        declarationDir: 'dist',
-        outputToFilesystem: true,
-        compilerOptions: {
-          module: 'ESNext',
-          moduleResolution: 'bundler'
-        }
-      }),
-      ...additionalPlugins,
-    ],
-    external: [
-      ...Object.keys(pkg.dependencies || {}),
-      ...Object.keys(pkg.peerDependencies || {}),
-      ...additionalExternal,
-    ],
-  },
-];
+  return [
+    {
+      input,
+      output: outputs,
+      plugins: [
+        resolve({
+          preferBuiltins: true,
+          browser: formats.includes('umd'),
+        }),
+        commonjs({
+          include: 'node_modules/**',
+        }),
+        typescript({
+          tsconfig,
+          sourceMap: true,
+          declaration: true,
+          declarationDir: 'dist',
+          outputToFilesystem: true,
+          compilerOptions: {
+            module: 'ESNext',
+            moduleResolution: 'bundler',
+          },
+        }),
+        ...additionalPlugins,
+      ],
+      external: [
+        ...Object.keys(pkg.dependencies || {}),
+        ...Object.keys(pkg.peerDependencies || {}),
+        ...additionalExternal,
+      ],
+    },
+  ];
 }

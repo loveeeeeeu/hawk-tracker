@@ -1,5 +1,5 @@
-import { AnyFun } from "../types/common";
-import { _global } from "./global";
+import { AnyFun } from '../types/common';
+import { _global } from './global';
 
 /**
  * 添加事件监听器
@@ -12,10 +12,15 @@ export function subscribeListener(
   target: Window | Document | Element,
   eventName: string,
   handler: AnyFun,
-  options = false
+  options = false,
 ): void {
-  console.log('subscribeListener xxxxx',{target,eventName,handler,options})
-  target.addEventListener(eventName, handler, options)
+  console.log('subscribeListener xxxxx', {
+    target,
+    eventName,
+    handler,
+    options,
+  });
+  target.addEventListener(eventName, handler, options);
 }
 
 /**
@@ -29,9 +34,9 @@ export function unsubscribeListener(
   target: Window | Document | Element,
   eventName: string,
   handler: AnyFun,
-  options = false
+  options = false,
 ): void {
-  target.removeEventListener(eventName, handler, options)
+  target.removeEventListener(eventName, handler, options);
 }
 
 /**
@@ -45,14 +50,14 @@ export function replaceMethod<T extends Record<string, any>>(
   source: T,
   name: keyof T,
   replacement: (original: AnyFun) => AnyFun,
-  isForced = false
+  isForced = false,
 ): void {
-  if (source === undefined) return
+  if (source === undefined) return;
   if (name in source || isForced) {
-    const original = source[name]
-    const wrapped = replacement(original)
+    const original = source[name];
+    const wrapped = replacement(original);
     if (typeof wrapped === 'function') {
-      ;(source as any)[name] = wrapped
+      (source as any)[name] = wrapped;
     }
   }
 }
@@ -66,33 +71,33 @@ export function replaceMethod<T extends Record<string, any>>(
 export function throttle<T extends AnyFun>(
   func: T,
   delay: number,
-  immediate = false
+  immediate = false,
 ): (...args: Parameters<T>) => void {
-  let timer: NodeJS.Timeout | null = null
-  let lastArgs: Parameters<T>
+  let timer: NodeJS.Timeout | null = null;
+  let lastArgs: Parameters<T>;
 
   return function (this: any, ...args: Parameters<T>) {
-    lastArgs = args
+    lastArgs = args;
 
     if (timer === null) {
       if (immediate) {
-        func.apply(this, lastArgs)
+        func.apply(this, lastArgs);
       }
       timer = setTimeout(() => {
-        timer = null
+        timer = null;
         if (!immediate) {
-          func.apply(this, lastArgs)
+          func.apply(this, lastArgs);
         }
-      }, delay)
+      }, delay);
     }
-  }
+  };
 }
 
 /**
  * 获取当前时间戳
  */
 export function getTimestamp(): number {
-  return Date.now()
+  return Date.now();
 }
 
 /**
@@ -100,61 +105,73 @@ export function getTimestamp(): number {
  */
 export function hasOwnProperty<T extends Record<string, any>>(
   obj: T,
-  prop: string | number | symbol
+  prop: string | number | symbol,
 ): prop is keyof T {
-  return Object.prototype.hasOwnProperty.call(obj, prop)
+  return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
 /**
  * 安全地检查全局对象是否存在某个属性
  */
 export function hasGlobalProperty(prop: string): boolean {
-  return typeof _global !== 'undefined' && prop in _global
+  return typeof _global !== 'undefined' && prop in _global;
 }
 
 /**
  * 创建事件处理器存储对象
  */
-export function createEventStorage<T extends string>(): Record<T, AnyFun | null> {
-  return {} as Record<T, AnyFun | null>
+export function createEventStorage<T extends string>(): Record<
+  T,
+  AnyFun | null
+> {
+  return {} as Record<T, AnyFun | null>;
 }
 
 /**
  * 创建原始方法存储对象
  */
-export function createOriginalMethodsStorage<T extends string>(): Record<T, AnyFun | null> {
-  return {} as Record<T, AnyFun | null>
+export function createOriginalMethodsStorage<T extends string>(): Record<
+  T,
+  AnyFun | null
+> {
+  return {} as Record<T, AnyFun | null>;
 }
 
 /**
  * 获取cookie
- * @param name 
- * @returns 
+ * @param name
+ * @returns
  */
 export function getCookie(name: string): string | null {
-  return document.cookie.split('; ').find(row => row.startsWith(`${name}=`))?.split('=')[1] || null
+  return (
+    document.cookie
+      .split('; ')
+      .find((row) => row.startsWith(`${name}=`))
+      ?.split('=')[1] || null
+  );
 }
 
 /**
  * 设置cookie
- * @param name 
- * @param value 
- * @param days 
+ * @param name
+ * @param value
+ * @param days
  */
 export function setCookie(name: string, value: string, days: number): void {
-  const expires = new Date()
-  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000)
-  document.cookie = `${name}=${value}; expires=${expires.toUTCString()}; path=/`
+  const expires = new Date();
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  document.cookie = `${name}=${value}; expires=${expires.toUTCString()}; path=/`;
 }
 
 /**
  * 生成UUID
- * @returns 
+ * @returns
  */
 export function generateUUID(): string {
-    // uuid生成
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8)
-        return v.toString(16)
-      })
+  // uuid生成
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0,
+      v = c == 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
 }

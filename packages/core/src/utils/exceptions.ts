@@ -5,7 +5,7 @@ import { VoidFun } from '../types/common';
  * @param fn
  * @param errFn
  */
-export function nativeTryCatch(fn: VoidFun, errFn?: (err:any) => void): void {
+export function nativeTryCatch(fn: VoidFun, errFn?: (err: any) => void): void {
   try {
     fn();
   } catch (err) {

@@ -11,9 +11,8 @@
     "types": ["node", "vite/client"],
     "paths": {
       "@/*": ["./app/*"],
-      "@workspace/ui/*": ["../../packages/ui/src/*"],
+      "@workspace/ui/*": ["../../packages/ui/src/*"]
     }
   },
   "exclude": ["node_modules"]
 }
-

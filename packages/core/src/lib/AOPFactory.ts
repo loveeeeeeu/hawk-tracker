@@ -1,5 +1,5 @@
-import type { AnyFun } from '../types/common'
-import { _global } from '../utils/global'
+import type { AnyFun } from '../types/common';
+import { _global } from '../utils/global';
 import {
   subscribeListener,
   unsubscribeListener,
@@ -9,21 +9,21 @@ import {
   hasOwnProperty,
   hasGlobalProperty,
   createEventStorage,
-  createOriginalMethodsStorage  
-} from '../utils/common'
-import { LISTEN_TYPES } from '../common/event'
-import { eventCenter } from './eventCenter'
-import debug from '../utils/debug'
+  createOriginalMethodsStorage,
+} from '../utils/common';
+import { LISTEN_TYPES } from '../common/event';
+import { eventCenter } from './eventCenter';
+import debug from '../utils/debug';
 
 // 存储原始方法，用于恢复
 const originalMethods = createOriginalMethodsStorage<
   | 'consoleError'
-  | 'xhrOpen' 
+  | 'xhrOpen'
   | 'xhrSend'
   | 'fetch'
   | 'historyPushState'
   | 'historyReplaceState'
->()
+>();
 
 // 存储事件监听器引用，用于移除
 const eventHandlers = createEventStorage<
@@ -36,7 +36,7 @@ const eventHandlers = createEventStorage<
   | 'popstate'
   | 'offline'
   | 'online'
->()
+>();
 
 /**
  * 事件监听器工厂函数
@@ -49,18 +49,23 @@ function createEventListener(
   type: LISTEN_TYPES,
   eventName: string,
   target: Window | Document = _global,
-  options = false
+  options = false,
 ): void {
-  if (!target || !('addEventListener' in target)) return
+  if (!target || !('addEventListener' in target)) return;
 
   const handler = function (event: Event) {
-    eventCenter.emit(type, event)
-  }
+    eventCenter.emit(type, event);
+  };
 
-  eventHandlers[eventName as keyof typeof eventHandlers] = handler
-  
-  debug.logDebug('createEventListener xxxxx',{target,eventName,handler,options})
-  subscribeListener(target, eventName, handler, options)
+  eventHandlers[eventName as keyof typeof eventHandlers] = handler;
+
+  debug.logDebug('createEventListener xxxxx', {
+    target,
+    eventName,
+    handler,
+    options,
+  });
+  subscribeListener(target, eventName, handler, options);
 }
 
 /**
@@ -76,20 +81,24 @@ function createThrottledEventListener(
   eventName: string,
   delay: number,
   target: Window | Document = _global,
-  options = false
+  options = false,
 ): void {
-  if (!target || !('addEventListener' in target)) return
+  if (!target || !('addEventListener' in target)) return;
 
-  const throttledHandler = throttle((event: Event) => {
-    eventCenter.emit(type, event)
-  }, delay, true)
+  const throttledHandler = throttle(
+    (event: Event) => {
+      eventCenter.emit(type, event);
+    },
+    delay,
+    true,
+  );
 
   const handler = function (event: Event) {
-    throttledHandler(event)
-  }
+    throttledHandler(event);
+  };
 
-  eventHandlers[eventName as keyof typeof eventHandlers] = handler
-  subscribeListener(target, eventName, handler, options)
+  eventHandlers[eventName as keyof typeof eventHandlers] = handler;
+  subscribeListener(target, eventName, handler, options);
 }
 
 /**
@@ -105,16 +114,16 @@ function createMethodReplace<T extends Record<string, any>>(
   methodName: keyof T,
   type: LISTEN_TYPES,
   wrapper: (original: AnyFun, type: LISTEN_TYPES) => AnyFun,
-  storageKey: keyof typeof originalMethods
+  storageKey: keyof typeof originalMethods,
 ): void {
-  if (!target || !hasOwnProperty(target, methodName)) return
+  if (!target || !hasOwnProperty(target, methodName)) return;
 
   // 保存原始方法
-  originalMethods[storageKey] = target[methodName]
+  originalMethods[storageKey] = target[methodName];
 
   replaceMethod(target, methodName, (original: AnyFun) => {
-    return wrapper(original, type)
-  })
+    return wrapper(original, type);
+  });
 }
 
 /**
@@ -122,55 +131,59 @@ function createMethodReplace<T extends Record<string, any>>(
  */
 const listenerRegistry: Record<LISTEN_TYPES, () => void> = {
   [LISTEN_TYPES.ERROR]: () => {
-    createEventListener(LISTEN_TYPES.ERROR, 'error', _global, true)
+    createEventListener(LISTEN_TYPES.ERROR, 'error', _global, true);
   },
 
   [LISTEN_TYPES.UNHANDLEDREJECTION]: () => {
-    createEventListener(LISTEN_TYPES.UNHANDLEDREJECTION, 'unhandledrejection')
+    createEventListener(LISTEN_TYPES.UNHANDLEDREJECTION, 'unhandledrejection');
   },
 
   [LISTEN_TYPES.CLICK]: () => {
-    if (!hasGlobalProperty('document')) return
+    if (!hasGlobalProperty('document')) return;
     createThrottledEventListener(
-      LISTEN_TYPES.CLICK, 
-      'click', 
-      100, 
-      _global.document, 
-      true
-    )
+      LISTEN_TYPES.CLICK,
+      'click',
+      100,
+      _global.document,
+      true,
+    );
   },
 
   [LISTEN_TYPES.LOAD]: () => {
-    createEventListener(LISTEN_TYPES.LOAD, 'load', _global, true)
+    createEventListener(LISTEN_TYPES.LOAD, 'load', _global, true);
   },
 
   [LISTEN_TYPES.BEFOREUNLOAD]: () => {
-    createEventListener(LISTEN_TYPES.BEFOREUNLOAD, 'beforeunload')
+    createEventListener(LISTEN_TYPES.BEFOREUNLOAD, 'beforeunload');
   },
 
   [LISTEN_TYPES.HASHCHANGE]: () => {
-    createEventListener(LISTEN_TYPES.HASHCHANGE, 'hashchange')
+    createEventListener(LISTEN_TYPES.HASHCHANGE, 'hashchange');
   },
 
   [LISTEN_TYPES.POPSTATE]: () => {
-    createEventListener(LISTEN_TYPES.POPSTATE, 'popstate')
+    createEventListener(LISTEN_TYPES.POPSTATE, 'popstate');
   },
 
   [LISTEN_TYPES.OFFLINE]: () => {
-    createEventListener(LISTEN_TYPES.OFFLINE, 'offline')
+    createEventListener(LISTEN_TYPES.OFFLINE, 'offline');
   },
 
   [LISTEN_TYPES.ONLINE]: () => {
-    createEventListener(LISTEN_TYPES.ONLINE, 'online')
+    createEventListener(LISTEN_TYPES.ONLINE, 'online');
   },
 
   [LISTEN_TYPES.READYSTATECHANGE]: () => {
-    if (!hasGlobalProperty('document')) return
-    createEventListener(LISTEN_TYPES.READYSTATECHANGE, 'readystatechange', _global.document)
+    if (!hasGlobalProperty('document')) return;
+    createEventListener(
+      LISTEN_TYPES.READYSTATECHANGE,
+      'readystatechange',
+      _global.document,
+    );
   },
 
   [LISTEN_TYPES.CONSOLEERROR]: () => {
-    if (!hasGlobalProperty('console')) return
+    if (!hasGlobalProperty('console')) return;
     createMethodReplace(
       console,
       'error',
@@ -178,130 +191,140 @@ const listenerRegistry: Record<LISTEN_TYPES, () => void> = {
       (original, type) => {
         return function (this: any, ...args: any[]): void {
           // 过滤掉SDK内部的错误日志
-          if (!(args[0] && 
-                typeof args[0] === 'string' && 
-                args[0].startsWith('@hawk-tracker'))) {
-            eventCenter.emit(type, args)
+          if (
+            !(
+              args[0] &&
+              typeof args[0] === 'string' &&
+              args[0].startsWith('@hawk-tracker')
+            )
+          ) {
+            eventCenter.emit(type, args);
           }
-          original.apply(this, args)
-        }
+          original.apply(this, args);
+        };
       },
-      'consoleError'
-    )
+      'consoleError',
+    );
   },
 
   [LISTEN_TYPES.XHROPEN]: () => {
-    if (!hasGlobalProperty('XMLHttpRequest')) return
+    if (!hasGlobalProperty('XMLHttpRequest')) return;
     createMethodReplace(
       XMLHttpRequest.prototype,
       'open',
       LISTEN_TYPES.XHROPEN,
       (original, type) => {
         return function (this: XMLHttpRequest, ...args: any[]): void {
-          eventCenter.emit(type, this, ...args)
-          original.apply(this, args)
-        }
+          eventCenter.emit(type, this, ...args);
+          original.apply(this, args);
+        };
       },
-      'xhrOpen'
-    )
+      'xhrOpen',
+    );
   },
 
   [LISTEN_TYPES.XHRSEND]: () => {
-    if (!hasGlobalProperty('XMLHttpRequest')) return
+    if (!hasGlobalProperty('XMLHttpRequest')) return;
     createMethodReplace(
       XMLHttpRequest.prototype,
       'send',
       LISTEN_TYPES.XHRSEND,
       (original, type) => {
         return function (this: XMLHttpRequest, ...args: any[]): void {
-          eventCenter.emit(type, this, ...args)
-          original.apply(this, args)
-        }
+          eventCenter.emit(type, this, ...args);
+          original.apply(this, args);
+        };
       },
-      'xhrSend'
-    )
+      'xhrSend',
+    );
   },
 
   [LISTEN_TYPES.FETCH]: () => {
-    if (!hasGlobalProperty('fetch')) return
+    if (!hasGlobalProperty('fetch')) return;
     createMethodReplace(
       _global,
       'fetch',
       LISTEN_TYPES.FETCH,
       (original, type) => {
         return function (this: any, ...args: any[]): Promise<Response> {
-          const fetchStart = getTimestamp()
-          const traceContext = { startTime: fetchStart }
-          
-          return original.apply(this, args).then((response: Response) => {
-            eventCenter.emit(type, {
-              args,
-              response,
-              startTime: fetchStart,
-              endTime: getTimestamp(),
-              traceContext
+          const fetchStart = getTimestamp();
+          const traceContext = { startTime: fetchStart };
+
+          return original
+            .apply(this, args)
+            .then((response: Response) => {
+              eventCenter.emit(type, {
+                args,
+                response,
+                startTime: fetchStart,
+                endTime: getTimestamp(),
+                traceContext,
+              });
+              return response;
             })
-            return response
-          }).catch((error: Error) => {
-            eventCenter.emit(type, {
-              args,
-              error,
-              startTime: fetchStart,
-              endTime: getTimestamp(),
-              traceContext
-            })
-            throw error
-          })
-        }
+            .catch((error: Error) => {
+              eventCenter.emit(type, {
+                args,
+                error,
+                startTime: fetchStart,
+                endTime: getTimestamp(),
+                traceContext,
+              });
+              throw error;
+            });
+        };
       },
-      'fetch'
-    )
+      'fetch',
+    );
   },
 
   [LISTEN_TYPES.HISTORYPUSHSTATE]: () => {
-    if (!hasGlobalProperty('history') || !_global.history.pushState) return
+    if (!hasGlobalProperty('history') || !_global.history.pushState) return;
     createMethodReplace(
       _global.history,
       'pushState',
       LISTEN_TYPES.HISTORYPUSHSTATE,
       (original, type) => {
         return function (this: History, ...args: any[]): void {
-          eventCenter.emit(type, ...args)
-          original.apply(this, args)
-        }
+          eventCenter.emit(type, ...args);
+          original.apply(this, args);
+        };
       },
-      'historyPushState'
-    )
+      'historyPushState',
+    );
   },
 
   [LISTEN_TYPES.HISTORYREPLACESTATE]: () => {
-    if (!hasGlobalProperty('history') || !_global.history.replaceState) return
+    if (!hasGlobalProperty('history') || !_global.history.replaceState) return;
     createMethodReplace(
       _global.history,
       'replaceState',
       LISTEN_TYPES.HISTORYREPLACESTATE,
       (original, type) => {
         return function (this: History, ...args: any[]): void {
-          eventCenter.emit(type, ...args)
-          original.apply(this, args)
-        }
+          eventCenter.emit(type, ...args);
+          original.apply(this, args);
+        };
       },
-      'historyReplaceState'
-    )
-  }
-}
+      'historyReplaceState',
+    );
+  },
+};
 
 /**
  * 根据类型注册监听器或重写方法
  * @param type 事件类型
  */
 function registerListener(type: LISTEN_TYPES): void {
-  const register = listenerRegistry[type]
+  const register = listenerRegistry[type];
   if (register) {
     try {
-      register()
+      register();
     } catch (error) {
-      console.warn(`[@hawk-tracker] Failed to register listener for ${type}:`, error)
+      console.warn(
+        `[@hawk-tracker] Failed to register listener for ${type}:`,
+        error,
+      );
     }
   }
 }
@@ -312,12 +335,12 @@ function registerListener(type: LISTEN_TYPES): void {
  */
 // TODO：根据注册插件不同，返回不同的监听列表
 export function initReplace(types?: LISTEN_TYPES[]): void {
-  const targetTypes = types || Object.values(LISTEN_TYPES)
-  debug.logDebug('initReplace xxxxx',{targetTypes})
-  targetTypes.forEach(type => {
-      debug.logDebug('initReplace --->',{type})
-      registerListener(type)
-  })
+  const targetTypes = types || Object.values(LISTEN_TYPES);
+  debug.logDebug('initReplace xxxxx', { targetTypes });
+  targetTypes.forEach((type) => {
+    debug.logDebug('initReplace --->', { type });
+    registerListener(type);
+  });
 }
 
 /**
@@ -326,12 +349,12 @@ export function initReplace(types?: LISTEN_TYPES[]): void {
 function restoreOriginalMethod<T extends Record<string, any>>(
   target: T,
   methodName: keyof T,
-  storageKey: keyof typeof originalMethods
+  storageKey: keyof typeof originalMethods,
 ): void {
-  const originalMethod = originalMethods[storageKey]
+  const originalMethod = originalMethods[storageKey];
   if (originalMethod && target[methodName] !== originalMethod) {
-    ;(target as any)[methodName] = originalMethod
-    originalMethods[storageKey] = null
+    (target as any)[methodName] = originalMethod;
+    originalMethods[storageKey] = null;
   }
 }
 
@@ -341,12 +364,12 @@ function restoreOriginalMethod<T extends Record<string, any>>(
 function removeEventListener(
   eventName: string,
   target: Window | Document = _global,
-  options = false
+  options = false,
 ): void {
-  const handler = eventHandlers[eventName as keyof typeof eventHandlers]
+  const handler = eventHandlers[eventName as keyof typeof eventHandlers];
   if (handler) {
-    unsubscribeListener(target, eventName, handler, options)
-    eventHandlers[eventName as keyof typeof eventHandlers] = null
+    unsubscribeListener(target, eventName, handler, options);
+    eventHandlers[eventName as keyof typeof eventHandlers] = null;
   }
 }
 
@@ -355,33 +378,37 @@ function removeEventListener(
  */
 export function destroyReplace(): void {
   // 恢复原始方法
-  restoreOriginalMethod(console, 'error', 'consoleError')
-  
+  restoreOriginalMethod(console, 'error', 'consoleError');
+
   if (hasGlobalProperty('XMLHttpRequest')) {
-    restoreOriginalMethod(XMLHttpRequest.prototype, 'open', 'xhrOpen')
-    restoreOriginalMethod(XMLHttpRequest.prototype, 'send', 'xhrSend')
+    restoreOriginalMethod(XMLHttpRequest.prototype, 'open', 'xhrOpen');
+    restoreOriginalMethod(XMLHttpRequest.prototype, 'send', 'xhrSend');
   }
-  
+
   if (hasGlobalProperty('fetch')) {
-    restoreOriginalMethod(_global, 'fetch', 'fetch')
+    restoreOriginalMethod(_global, 'fetch', 'fetch');
   }
-  
+
   if (hasGlobalProperty('history')) {
-    restoreOriginalMethod(_global.history, 'pushState', 'historyPushState')
-    restoreOriginalMethod(_global.history, 'replaceState', 'historyReplaceState')
+    restoreOriginalMethod(_global.history, 'pushState', 'historyPushState');
+    restoreOriginalMethod(
+      _global.history,
+      'replaceState',
+      'historyReplaceState',
+    );
   }
 
   // 移除事件监听器
-  removeEventListener('error', _global, true)
-  removeEventListener('unhandledrejection')
-  removeEventListener('click', _global.document, true)
-  removeEventListener('load', _global, true)
-  removeEventListener('beforeunload')
-  removeEventListener('hashchange')
-  removeEventListener('popstate')
-  removeEventListener('offline')
-  removeEventListener('online')
-  removeEventListener('readystatechange', _global.document)
+  removeEventListener('error', _global, true);
+  removeEventListener('unhandledrejection');
+  removeEventListener('click', _global.document, true);
+  removeEventListener('load', _global, true);
+  removeEventListener('beforeunload');
+  removeEventListener('hashchange');
+  removeEventListener('popstate');
+  removeEventListener('offline');
+  removeEventListener('online');
+  removeEventListener('readystatechange', _global.document);
 }
 
 /**
@@ -398,30 +425,34 @@ export function isListenerSupported(type: LISTEN_TYPES): boolean {
     case LISTEN_TYPES.POPSTATE:
     case LISTEN_TYPES.OFFLINE:
     case LISTEN_TYPES.ONLINE:
-      return hasGlobalProperty('addEventListener')
-    
+      return hasGlobalProperty('addEventListener');
+
     case LISTEN_TYPES.READYSTATECHANGE:
-      return hasGlobalProperty('document') && hasGlobalProperty('addEventListener')
-    
+      return (
+        hasGlobalProperty('document') && hasGlobalProperty('addEventListener')
+      );
+
     case LISTEN_TYPES.CLICK:
-      return hasGlobalProperty('document') && hasGlobalProperty('addEventListener')
-    
+      return (
+        hasGlobalProperty('document') && hasGlobalProperty('addEventListener')
+      );
+
     case LISTEN_TYPES.CONSOLEERROR:
-      return hasGlobalProperty('console')
-    
+      return hasGlobalProperty('console');
+
     case LISTEN_TYPES.XHROPEN:
     case LISTEN_TYPES.XHRSEND:
-      return hasGlobalProperty('XMLHttpRequest')
-    
+      return hasGlobalProperty('XMLHttpRequest');
+
     case LISTEN_TYPES.FETCH:
-      return hasGlobalProperty('fetch')
-    
+      return hasGlobalProperty('fetch');
+
     case LISTEN_TYPES.HISTORYPUSHSTATE:
     case LISTEN_TYPES.HISTORYREPLACESTATE:
-      return hasGlobalProperty('history')
-    
+      return hasGlobalProperty('history');
+
     default:
-      return false
+      return false;
   }
 }
 
@@ -429,5 +460,7 @@ export function isListenerSupported(type: LISTEN_TYPES): boolean {
  * 获取支持的监听类型列表
  */
 export function getSupportedListenerTypes(): LISTEN_TYPES[] {
-  return Object.values(LISTEN_TYPES).filter(type => isListenerSupported(type))
+  return Object.values(LISTEN_TYPES).filter((type) =>
+    isListenerSupported(type),
+  );
 }

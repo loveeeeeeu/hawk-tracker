@@ -9,25 +9,25 @@ function getGlobalObject(): any {
   if (typeof window !== 'undefined') {
     return window;
   }
-  
+
   // Node.js 环境，返回一个模拟的 window 对象
   if (typeof global !== 'undefined') {
     // 如果 global 上已经有模拟的 window，直接返回
     if ((global as any).__mockWindow) {
       return (global as any).__mockWindow;
     }
-    
+
     // 创建模拟的 window 对象
     const mockWindow = {
       // 基本属性
       document: {},
       navigator: { userAgent: 'Node.js' },
       location: { href: 'about:blank' },
-      
+
       // HawkTracker 相关属性
       hawkTracker: undefined,
       _hawkTrackerInit_: false,
-      
+
       // 基本方法
       addEventListener: () => {},
       removeEventListener: () => {},
@@ -36,12 +36,12 @@ function getGlobalObject(): any {
       setInterval: global.setInterval,
       clearInterval: global.clearInterval,
     };
-    
+
     // 缓存模拟对象
     (global as any).__mockWindow = mockWindow;
     return mockWindow;
   }
-  
+
   // 其他环境兜底
   return {};
 }
@@ -82,5 +82,5 @@ export function isBrowserEnv(): boolean {
   return typeof window !== 'undefined';
 }
 
-const $sdkInstance = getGlobalHawkTracker()
+const $sdkInstance = getGlobalHawkTracker();
 export { _global, $sdkInstance };

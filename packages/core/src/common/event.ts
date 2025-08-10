@@ -24,7 +24,6 @@ export enum SEND_TYPES {
   CUSTOM = 'custom',
 }
 
-
 // export enum EVENT_TARGET {
 //   PAGE = 'page',
 //   RESOURCE = 'resource',

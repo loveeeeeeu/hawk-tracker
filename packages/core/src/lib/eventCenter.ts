@@ -8,7 +8,7 @@ export class EventCenter {
   private eventQueue: EventHandler[] = []; // 事件队列
 
   subscribeEvent(handler: EventHandler) {
-    console.log('subscribeEvent xxxxx',{handler})
+    console.log('subscribeEvent xxxxx', { handler });
     const handlers = this.eventMap.get(handler.type) || [];
     handlers.push(handler);
     this.eventMap.set(handler.type, handlers);
@@ -16,12 +16,20 @@ export class EventCenter {
 
   delEvent(handler: EventHandler) {
     const handlers = this.eventMap.get(handler.type) || [];
-    this.eventMap.set(handler.type, handlers.filter((h) => h !== handler));
+    this.eventMap.set(
+      handler.type,
+      handlers.filter((h) => h !== handler),
+    );
   }
 
   changeEvent(handler: EventHandler, newCallback: AnyFun) {
     const handlers = this.eventMap.get(handler.type) || [];
-    this.eventMap.set(handler.type, handlers.map((h) => (h === handler ? { ...h, callback: newCallback } : h)));
+    this.eventMap.set(
+      handler.type,
+      handlers.map((h) =>
+        h === handler ? { ...h, callback: newCallback } : h,
+      ),
+    );
   }
 
   getEvent(type: LISTEN_TYPES) {
@@ -39,4 +47,4 @@ export class EventCenter {
   }
 }
 
-export const eventCenter = new EventCenter()
+export const eventCenter = new EventCenter();

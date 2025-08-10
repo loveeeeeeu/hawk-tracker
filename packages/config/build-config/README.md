@@ -75,15 +75,18 @@ export default createServerRollupConfig({
 ## 开发 vs 生产模式
 
 配置会根据以下环境变量自动选择开发或生产模式：
+
 - `NODE_ENV === 'development'` 或
 - `ROLLUP_WATCH` 存在
 
 ### 开发模式特性
+
 - 启用 sourcemap
 - 更快的构建
 - 清晰的控制台输出
 
 ### 生产模式特性
+
 - 禁用 sourcemap
 - 优化构建体积
 - 排除测试文件
@@ -115,6 +118,7 @@ export default createMultiFormatDependencyConfig(pkg, {
 ## 依赖说明
 
 这个包包含了以下 Rollup 插件：
+
 - `@rollup/plugin-typescript` - TypeScript 支持
 - `@rollup/plugin-node-resolve` - 模块解析
 - `@rollup/plugin-commonjs` - CommonJS 支持

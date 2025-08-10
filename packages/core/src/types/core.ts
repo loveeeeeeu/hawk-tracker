@@ -9,14 +9,11 @@ export interface HawkTrackerCore {
   options: any; //公共配置
 }
 
-
-
 // 事件处理函数
 export interface EventHandler {
   type: LISTEN_TYPES;
   callback: AnyFun;
 }
-
 
 export interface ReportData {
   type: SEND_TYPES;
