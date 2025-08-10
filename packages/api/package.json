@@ -1,0 +1,23 @@
+{
+  "name": "@workspace/api",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "private": true,
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "lint": "eslint . --max-warnings 0"
+  },
+  "peerDependencies": {
+    "axios": "^1.11.0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@workspace/build-config": "workspace:*",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*"
+  }
+}
