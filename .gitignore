@@ -107,4 +107,4 @@ Thumbs.db
 
 # Husky
 .husky/_ 
-.log
+*.log

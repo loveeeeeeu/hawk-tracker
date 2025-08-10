@@ -6,8 +6,8 @@ import { ErrorPlugin } from '@hawk-tracker/plugin-error';
 console.log('Initializing Hawk Tracker...');
 
 hawkTracker.init({
-    dsn: 'https://your-dsn.com',
-    apikey: 'your-api-key'
+  dsn: 'https://your-dsn.com',
+  apikey: 'your-api-key',
 });
 
 console.log('Using ErrorPlugin...');

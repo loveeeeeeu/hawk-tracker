@@ -16,25 +16,25 @@ export function createBaseRollupConfig(options) {
       sourcemap: true,
       exports: 'auto',
     },
-  plugins: [
-    resolve({ 
-      preferBuiltins: true,
-      extensions: ['.js', '.ts', '.jsx', '.tsx', '.json'],
-      exportConditions: ['node', 'default']
-    }),
-    commonjs(),
-    typescript({
-      tsconfig: './tsconfig.json',
-      sourceMap: true,
-      declaration: true,
-      outputToFilesystem: true,
-      compilerOptions: {
-        module: 'ESNext',
-        moduleResolution: 'bundler'
-      }
-    }),
-    ...plugins,
-  ],
+    plugins: [
+      resolve({
+        preferBuiltins: true,
+        extensions: ['.js', '.ts', '.jsx', '.tsx', '.json'],
+        exportConditions: ['node', 'default'],
+      }),
+      commonjs(),
+      typescript({
+        tsconfig: './tsconfig.json',
+        sourceMap: true,
+        declaration: true,
+        outputToFilesystem: true,
+        compilerOptions: {
+          module: 'ESNext',
+          moduleResolution: 'bundler',
+        },
+      }),
+      ...plugins,
+    ],
     external,
   };
 }
@@ -75,13 +75,13 @@ export function createDependencyBundleConfigDev(pkg, options = {}) {
         exclude: ['**/*.test.ts', '**/*.spec.ts'],
         compilerOptions: {
           module: 'ESNext',
-          moduleResolution: 'bundler'
-        }
+          moduleResolution: 'bundler',
+        },
       }),
-      resolve({ 
+      resolve({
         preferBuiltins: true,
         exportConditions: ['node'],
-        extensions: ['.js', '.ts', '.json']
+        extensions: ['.js', '.ts', '.json'],
       }),
       commonjs({
         include: 'node_modules/**',
@@ -111,7 +111,7 @@ export function createDependencyBundleConfigProd(pkg, options = {}) {
   } = options;
 
   const plugins = [
-    resolve({ 
+    resolve({
       preferBuiltins: true,
       exportConditions: ['node'],
     }),
@@ -127,14 +127,14 @@ export function createDependencyBundleConfigProd(pkg, options = {}) {
       exclude: ['**/*.test.ts', '**/*.spec.ts'],
       compilerOptions: {
         module: 'ESNext',
-        moduleResolution: 'bundler'
-      }
+        moduleResolution: 'bundler',
+      },
     }),
     ...additionalPlugins,
   ];
 
   // Note: For minification, pass terser plugin through additionalPlugins
-  // Example: import terser from '@rollup/plugin-terser'; 
+  // Example: import terser from '@rollup/plugin-terser';
   // createDependencyBundleConfigProd(pkg, { minify: true, additionalPlugins: [terser()] })
 
   return {
@@ -164,8 +164,9 @@ export function createDependencyBundleConfigProd(pkg, options = {}) {
  * 兼容性配置函数 - 自动选择dev/prod版本
  */
 export function createRollupConfig(pkg, options = {}) {
-  const isDev = process.env.NODE_ENV === 'development' || process.env.ROLLUP_WATCH;
-  
+  const isDev =
+    process.env.NODE_ENV === 'development' || process.env.ROLLUP_WATCH;
+
   if (isDev) {
     return createDependencyBundleConfigDev(pkg, options);
   } else {
@@ -186,7 +187,7 @@ export function createMultiFormatDependencyConfig(pkg, options = {}) {
   } = options;
 
   const outputs = [];
-  
+
   if (formats.includes('cjs') && pkg.main) {
     outputs.push({
       file: pkg.main,
@@ -195,7 +196,7 @@ export function createMultiFormatDependencyConfig(pkg, options = {}) {
       exports: 'auto',
     });
   }
-  
+
   if (formats.includes('es') && pkg.module) {
     outputs.push({
       file: pkg.module,
@@ -203,7 +204,7 @@ export function createMultiFormatDependencyConfig(pkg, options = {}) {
       sourcemap: true,
     });
   }
-  
+
   if (formats.includes('umd') && pkg.browser) {
     outputs.push({
       file: pkg.browser,
@@ -217,7 +218,7 @@ export function createMultiFormatDependencyConfig(pkg, options = {}) {
     input,
     output: outputs,
     plugins: [
-      resolve({ 
+      resolve({
         preferBuiltins: true,
         browser: formats.includes('umd'),
       }),
@@ -232,8 +233,8 @@ export function createMultiFormatDependencyConfig(pkg, options = {}) {
         outputToFilesystem: true,
         compilerOptions: {
           module: 'ESNext',
-          moduleResolution: 'bundler'
-        }
+          moduleResolution: 'bundler',
+        },
       }),
       ...additionalPlugins,
     ],
