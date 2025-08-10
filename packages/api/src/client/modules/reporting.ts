@@ -4,7 +4,7 @@ import {
   EventDefinition,
   SubmitResponseBody,
   RegisterResponseBody,
-} from '../../types';
+} from '@/types';
 
 export const reporting = {
   /**
