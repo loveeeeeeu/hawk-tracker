@@ -55,7 +55,7 @@ export interface AppInfo {
   appVersion: string;
   appName: string;
   platform: string;
-  env: 'prod' | 'test'| 'dev';
+  env: 'prod' | 'test' | 'dev';
 }
 
 export interface CommonInfo {
@@ -71,68 +71,67 @@ export interface LogData {
 }
 
 export interface ErrorData {
-    name: string;
-    message: string;
-    stack?: string;
-    metaJson?: string;
+  name: string;
+  message: string;
+  stack?: string;
+  metaJson?: string;
 }
 
 export interface PerformanceData {
-    perfType: PerfType;
-    duration: number;
-    apiStatus?: APIStatus;
-    size?: number;
-    extraJson?: string;
+  perfType: PerfType;
+  duration: number;
+  apiStatus?: APIStatus;
+  size?: number;
+  extraJson?: string;
 }
 
 export interface TrackData {
-    eventName: string;
-    propertiesJson?: string;
+  eventName: string;
+  propertiesJson?: string;
 }
 
 export type EventDetails =
-    | { type: ReportType.TRACK; details: TrackData }
-    | { type: ReportType.ERROR; details: ErrorData }
-    | { type: ReportType.PERFORMANCE; details: PerformanceData }
-    | { type: ReportType.LOG; details: LogData };
-
+  | { type: ReportType.TRACK; details: TrackData }
+  | { type: ReportType.ERROR; details: ErrorData }
+  | { type: ReportType.PERFORMANCE; details: PerformanceData }
+  | { type: ReportType.LOG; details: LogData };
 
 export interface ReportEvent {
-    reportId: string;
-    type: ReportType;
-    timestamp: number; // Thrift i64
-    common: CommonInfo;
-    details: EventDetails['details']; // This will be correctly typed based on the 'type' property
+  reportId: string;
+  type: ReportType;
+  timestamp: number; // Thrift i64
+  common: CommonInfo;
+  details: EventDetails['details']; // This will be correctly typed based on the 'type' property
 }
 
 export interface ReportData {
-    batchId?: string;
-    dataSize: number;
-    timestamp: number; // Thrift i64
-    isRetry: boolean;
-    data: ReportEvent[]; // Corrected from ReportData to ReportEvent
+  batchId?: string;
+  dataSize: number;
+  timestamp: number; // Thrift i64
+  isRetry: boolean;
+  data: ReportEvent[]; // Corrected from ReportData to ReportEvent
 }
 
 export interface EventDefinitionData {
-    eventName: string;
-    description?: string;
-    status: boolean;
-    propertiesSchemaJson?: string;
+  eventName: string;
+  description?: string;
+  status: boolean;
+  propertiesSchemaJson?: string;
 }
 
 export interface EventDefinition {
-    app: AppInfo; // Corrected from AppInfo to app
-    events: EventDefinitionData[];
+  app: AppInfo; // Corrected from AppInfo to app
+  events: EventDefinitionData[];
 }
 
 export interface SubmitResponseBody {
-    batchId: string;
-    dataSize: number;
-    needRetry: boolean;
-    submitEvent?: string[];
+  batchId: string;
+  dataSize: number;
+  needRetry: boolean;
+  submitEvent?: string[];
 }
 
 export interface RegisterResponseBody {
-    eventSize: number;
-    isFlush: boolean;
+  eventSize: number;
+  isFlush: boolean;
 }
