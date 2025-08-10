@@ -1,4 +1,4 @@
-export enum EVENTTYPES {
+export enum LISTEN_TYPES {
   ERROR = 'error',
   UNHANDLEDREJECTION = 'unhandledrejection',
   CONSOLEERROR = 'consoleError',
@@ -16,3 +16,16 @@ export enum EVENTTYPES {
   ONLINE = 'online',
   OFFLINE = 'offline',
 }
+
+export enum SEND_TYPES {
+  ERROR = 'error',
+  PERFORMANCE = 'performance',
+  BEHAVIOR = 'behavior',
+  CUSTOM = 'custom',
+}
+
+// export enum EVENT_TARGET {
+//   PAGE = 'page',
+//   RESOURCE = 'resource',
+
+// }

@@ -1,4 +1,4 @@
-import { User } from "./user.js";
+import { User } from './user.js';
 
 /**
  * Payload for the login request.

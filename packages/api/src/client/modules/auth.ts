@@ -1,6 +1,10 @@
-import { LoginPayload, RegisterPayload } from "@/types/auth";
-import { User } from "@/types/user";
-import { apiInstance, clearAccessToken, setAccessToken } from "@/client/instance";
+import { LoginPayload, RegisterPayload } from '@/types/auth';
+import { User } from '@/types/user';
+import {
+  apiInstance,
+  clearAccessToken,
+  setAccessToken,
+} from '@/client/instance';
 
 export const auth = {
   login: async (payload: LoginPayload): Promise<User> => {
@@ -16,5 +20,5 @@ export const auth = {
   logout: async () => {
     await apiInstance.post('/auth/logout');
     clearAccessToken();
-  }
-}
+  },
+};

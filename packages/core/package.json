@@ -32,9 +32,16 @@
     "access": "public"
   },
   "devDependencies": {
+    "@types/node": "^24.2.1",
     "@workspace/build-config": "workspace:*",
     "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
     "rollup": "^4.46.2"
+  },
+  "dependencies": {
+    "@fingerprintjs/fingerprintjs": "^4.6.2",
+    "@types/pako": "^2.0.3",
+    "pako": "^2.1.0",
+    "tslib": "^2.8.1"
   }
 }
