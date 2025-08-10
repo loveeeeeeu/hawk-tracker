@@ -21,7 +21,8 @@
     "build-and-fix": "turbo run lint:fix && turbo run build",
     "prepare": "node .husky/install.mjs",
     "version-packages": "changeset version",
-    "release": "pnpm build-and-fix && pnpm version-packages && pnpm publish -r --no-git-checks"
+    "release": "pnpm build-and-fix && pnpm version-packages && pnpm publish -r --no-git-checks",
+    "commit": "cz"
   },
   "keywords": [],
   "author": "",
@@ -29,14 +30,18 @@
   "packageManager": "pnpm@10.12.1",
   "devDependencies": {
     "@changesets/cli": "^2.29.5",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@workspace/build-config": "workspace:*",
     "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.5",
     "prettier": "^3.6.2",
-    "turbo": "^2.5.5",
     "rollup": "^4.46.2",
+    "turbo": "^2.5.5",
     "typescript": "^5.9.2"
   },
   "lint-staged": {

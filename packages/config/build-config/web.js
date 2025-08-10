@@ -10,9 +10,9 @@ import typescript from '@rollup/plugin-typescript';
  * Web应用Rollup配置创建器
  */
 export function createWebRollupConfig(options) {
-  const { 
-    input, 
-    outputDir, 
+  const {
+    input,
+    outputDir,
     outputFile,
     external = [],
     babelPresets = ['@babel/preset-react'],
@@ -23,9 +23,9 @@ export function createWebRollupConfig(options) {
   } = options;
 
   // 确定输出配置
-  const output = outputFile ? 
-    { file: outputFile, format, sourcemap } :
-    { dir: outputDir, format, sourcemap };
+  const output = outputFile
+    ? { file: outputFile, format, sourcemap }
+    : { dir: outputDir, format, sourcemap };
 
   const baseConfig = {
     input,
@@ -37,14 +37,15 @@ export function createWebRollupConfig(options) {
         browser: true,
       }),
       commonjs(),
-      typescript({ 
+      typescript({
         tsconfig: './tsconfig.json',
         declaration: generateTypes,
-        declarationDir: outputDir || outputFile?.replace(/\/[^/]+$/, '') || 'dist',
+        declarationDir:
+          outputDir || outputFile?.replace(/\/[^/]+$/, '') || 'dist',
         compilerOptions: {
           module: 'ESNext',
-          moduleResolution: 'bundler'
-        }
+          moduleResolution: 'bundler',
+        },
       }),
       babel({
         presets: babelPresets,
@@ -52,18 +53,20 @@ export function createWebRollupConfig(options) {
         exclude: 'node_modules/**',
         extensions: ['.js', '.jsx', '.ts', '.tsx'],
       }),
-      postcss(postcssConfig || {
-        extract: true,
-        modules: false,
-        sourceMap: sourcemap,
-        minimize: false,
-        inject: false,
-        use: {
-          sass: false,
-          stylus: false,
-          less: false,
+      postcss(
+        postcssConfig || {
+          extract: true,
+          modules: false,
+          sourceMap: sourcemap,
+          minimize: false,
+          inject: false,
+          use: {
+            sass: false,
+            stylus: false,
+            less: false,
+          },
         },
-      }),
+      ),
     ],
     external,
   };
@@ -72,10 +75,10 @@ export function createWebRollupConfig(options) {
 
   // 如果需要生成类型定义
   if (generateTypes) {
-    const typesOutput = outputFile ? 
-      outputFile.replace(/\.(js|mjs)$/, '.d.ts') : 
-      `${outputDir}/index.d.ts`;
-    
+    const typesOutput = outputFile
+      ? outputFile.replace(/\.(js|mjs)$/, '.d.ts')
+      : `${outputDir}/index.d.ts`;
+
     configs.push({
       input,
       output: [{ file: typesOutput, format: 'es' }],
@@ -117,7 +120,7 @@ export function createWebAppRollupConfig(options = {}) {
         browser: true,
       }),
       commonjs(),
-      typescript({ 
+      typescript({
         tsconfig: './tsconfig.json',
         declaration: false,
         declarationDir: undefined,
@@ -126,8 +129,8 @@ export function createWebAppRollupConfig(options = {}) {
           moduleResolution: 'bundler',
           declarationMap: false,
           composite: false,
-          incremental: false
-        }
+          incremental: false,
+        },
       }),
       babel({
         presets: ['@babel/preset-react'],
