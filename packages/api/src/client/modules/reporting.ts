@@ -1,5 +1,10 @@
 import { apiInstance } from '../instance';
-import { ReportData, EventDefinition, SubmitResponseBody, RegisterResponseBody } from '../../types';
+import {
+  ReportData,
+  EventDefinition,
+  SubmitResponseBody,
+  RegisterResponseBody,
+} from '../../types';
 
 export const reporting = {
   /**
@@ -16,7 +21,9 @@ export const reporting = {
    * @param definitions - An array of EventDefinition objects.
    * @returns A promise that resolves with the registration response body.
    */
-  registerEvents: (definitions: EventDefinition[]): Promise<RegisterResponseBody> => {
+  registerEvents: (
+    definitions: EventDefinition[],
+  ): Promise<RegisterResponseBody> => {
     return apiInstance.post('/report/register', definitions);
   },
 };
