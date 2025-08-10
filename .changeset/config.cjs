@@ -1,4 +1,5 @@
-{
+// .changeset/config.cjs
+module.exports = {
   "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": false,
@@ -8,4 +9,4 @@
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "ignore": []
-}
+};
