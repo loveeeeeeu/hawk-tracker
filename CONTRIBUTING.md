@@ -10,47 +10,53 @@ Before you start, make sure you have the following installed:
 ## Getting Started
 
 1. Fork the Repository
-First, fork the repository to your GitHub account. This will create your own copy of the repository.
+   First, fork the repository to your GitHub account. This will create your own copy of the repository.
 
 2. Clone the Repository
-Clone the repository you just forked to your local machine:
+   Clone the repository you just forked to your local machine:
 
 ```bash
 git clone https://github.com/your-username/hawk-tracker.git
 cd hawk-tracker
 ```
+
 3. Add Upstream Remote
-To keep your repository in sync with the original repository, add the upstream remote:
+   To keep your repository in sync with the original repository, add the upstream remote:
 
 ```bash
 git remote add upstream https://github.com/gshan-1/hawk-tracker.git
 ```
+
 4. Create a New Branch
-Before you start working, make sure to create a new branch:
+   Before you start working, make sure to create a new branch:
 
 ```bash
 git checkout -b <type>/<desc>
 ```
+
 Replace `<type>` with the type of change you are making (e.g., `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`).
 Replace `<desc>` with the issue description you are working on (e.g., `api`).
 
 ## Development Workflow
+
 1. Install Dependencies
-Before you start developing, install all dependencies:
+   Before you start developing, install all dependencies:
 
 ```bash
 pnpm install
 ```
+
 2. Run the Project
-To ensure you are developing in a properly running environment, start the project:
+   To ensure you are developing in a properly running environment, start the project:
 
 ```bash
 pnpm dev
 ```
+
 Replace `<desc>` with the issue description you are working on (e.g., `api`).
 
 3. Globally Link the Project
-To conveniently use and test your scaffold commands during development, you can globally link your project using pnpm link --global:
+   To conveniently use and test your scaffold commands during development, you can globally link your project using pnpm link --global:
 
 ```bash
 pnpm link --global
@@ -59,6 +65,7 @@ pnpm link --global
 This way, you can use your scaffold commands anywhere without having to run them from the project directory each time.
 
 ## Development Guidelines
+
 Please follow these development guidelines:
 
 Ensure code is clear and concise.
@@ -67,6 +74,7 @@ If you add new features, please write corresponding tests.
 If you fix bugs, please add tests to prevent them from reoccurring.
 
 ## Commit Changes
+
 Before committing your changes, make sure you have properly formatted and linted the code:
 
 ```bash
@@ -84,6 +92,7 @@ pnpm commit
 Replace `<desc>` with the issue description you are working on (e.g., `api`).
 
 ## Sync Your Branch
+
 Before you submit your changes, make sure your branch is up to date:
 
 ```bash
@@ -92,6 +101,7 @@ git rebase upstream/main
 ```
 
 ## Push Your Branch
+
 Push your branch to your own repository:
 
 ```bash

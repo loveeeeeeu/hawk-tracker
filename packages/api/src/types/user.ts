@@ -16,9 +16,4 @@ export interface User {
    * The user's email address.
    */
   email: string;
-
-  /**
-   * The user's roles.
-   */
-  roles: string[];
 }
