@@ -19,7 +19,7 @@ export const loader: LoaderFunction = async () => {
   return Response.json({ projects }); // 明确返回类型
 };//为什么将数据包装为 { projects } 对象结构:便于组件消费,且React Router 的 loader 函数中，要求使用 Response.json() 包装数据
 
-//当 action 函数执行完成后，React Router 会自动重新调用 loader 函数来获取最新数据！
+//当 action 函数（CRUD)执行完成后，React Router 会自动重新调用 loader 函数来获取最新数据！
 export const action: ActionFunction = async ({ request }) => {
   try {
     const formData = await request.formData();
