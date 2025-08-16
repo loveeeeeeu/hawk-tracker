@@ -8,11 +8,16 @@
   ],
   "compilerOptions": {
     "baseUrl": ".",
-    "types": ["node", "vite/client"],
+    "types": ["node", "vite/client", "jest", "@testing-library/jest-dom"],
     "paths": {
       "@/*": ["./app/*"],
       "@workspace/ui/*": ["../../packages/ui/src/*"]
-    }
+    },
+    "jsx": "react-jsx",
+    "module": "esnext",
+    "target": "esnext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true
   },
   "exclude": ["node_modules"]
 }
