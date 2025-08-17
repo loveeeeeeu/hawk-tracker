@@ -9,6 +9,8 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
+    "@hawk-tracker/core": "workspace:*",
+    "@hawk-tracker/plugin-error": "workspace:*",
     "@react-router/node": "^7.7.1",
     "@react-router/serve": "^7.7.1",
     "@workspace/api": "workspace:*",
