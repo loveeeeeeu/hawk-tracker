@@ -6,6 +6,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import { useEffect } from "react";
 
 import type { Route } from "./+types/root";
 import "./app.css";
@@ -42,6 +43,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  // 在应用启动时初始化Hawk Tracker（只在客户端）
+  useEffect(() => {
+    // 动态导入Hawk Tracker，确保只在客户端运行
+    if (typeof window !== 'undefined') {
+      import('./lib/hawk-tracker').then(() => {
+        console.log('🦅 Hawk Tracker: Web应用启动完成');
+        
+        // 开发环境下的额外调试信息
+        if (import.meta.env.DEV) {
+          console.log('�� Hawk Tracker: 开发模式 - 可以开始测试错误监控');
+        }
+      });
+    }
+  }, []);
+
   return <Outlet />;
 }
 

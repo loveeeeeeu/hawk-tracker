@@ -97,7 +97,7 @@ export function ProjectTable() {
                 <td className="p-4 align-middle text-muted-foreground">{project.createdAt}</td>
                 <td className="p-4 align-middle">
                   <div className="flex space-x-2">
-                    <a className="text-primary hover:underline" href={`/project/${project.id}`}>查看</a>
+                    <a className="text-primary hover:underline" href={`/project/${project.id}/overview`}>查看</a>
                     <button 
                       className="text-blue-600 hover:underline"
                       onClick={() => handleEdit(project)}
