@@ -7,7 +7,7 @@ interface ProjectMember {
   name: string;
   email: string;
   role: 'owner' | 'admin' | 'member' | 'viewer';
-  avatar?: string;
+  avatar?: string
 }
 
 interface ProjectSettings {
