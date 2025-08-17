@@ -7,7 +7,9 @@ import { setConfig, getConfig } from './common/config';
 import { initBaseInfo } from './common/base';
 import { setGlobalHawkTracker, getGlobalHawkTracker } from './utils/global';
 
-console.log('🔥 Core package hot reload test - ' + new Date().toLocaleTimeString());
+console.log(
+  '🔥 Core package hot reload test - ' + new Date().toLocaleTimeString(),
+);
 
 export class HawkTracker {
   config: InternalConfig; // 配置项
@@ -25,9 +27,8 @@ export class HawkTracker {
       // ... 其他 DataSender 需要的配置
     });
     this.eventCenter = eventCenter;
-    this.baseInfo = initBaseInfo(configs)
+    this.baseInfo = initBaseInfo(configs);
   }
-
 
   public use(plugin: any, option: any) {
     const instance = new plugin(option);

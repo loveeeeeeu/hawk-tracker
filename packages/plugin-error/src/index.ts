@@ -20,10 +20,15 @@ export class ErrorPlugin extends BasePlugin {
       callback: (data: any) => {
         console.log('ErrorPlugin error', data);
         // 要提取一下data信息
-        const transformedData = transformData(data)
+        const transformedData = transformData(data);
         // 根据data 来判断是哪种错误类型，替换SEND_SUB_TYPES.ERROR,
-        
-        dataSender.sendData(SEND_TYPES.ERROR, SEND_SUB_TYPES.ERROR, transformedData, true);
+
+        dataSender.sendData(
+          SEND_TYPES.ERROR,
+          SEND_SUB_TYPES.ERROR,
+          transformedData,
+          true,
+        );
       },
     });
     console.log({ eventCenter });

@@ -25,7 +25,6 @@ export enum SEND_TYPES {
   CUSTOM = 'custom',
 }
 
-
 // 精确地描述具体的事件对象类型
 export enum SEND_SUB_TYPES {
   ERROR = 'error',
@@ -49,7 +48,6 @@ export enum SEND_SUB_TYPES {
   // FMP = 'fmp',
   // TRACKER = 'tracker'
 }
-
 
 // export enum EVENT_TARGET {
 //   PAGE = 'page',

@@ -15,9 +15,11 @@ interface MonitorInstance {
 export function useMonitor() {
   // 从全局注入监控实例
   const monitor = inject<MonitorInstance>(MONITOR_INJECTION_KEY);
-  
+
   if (!monitor) {
-    console.warn('Monitor instance not found. Make sure to provide it in your app.');
+    console.warn(
+      'Monitor instance not found. Make sure to provide it in your app.',
+    );
     return {
       track: () => {},
       trackError: () => {},
@@ -100,7 +102,7 @@ export function useComponentPerformance(componentName: string) {
 
   onMounted(() => {
     mountStartTime.value = performance.now();
-    
+
     // 下一帧记录挂载完成时间
     requestAnimationFrame(() => {
       const mountDuration = performance.now() - mountStartTime.value;
@@ -121,9 +123,9 @@ export function useComponentPerformance(componentName: string) {
   return {
     measureAction: (actionName: string, fn: () => void | Promise<void>) => {
       const startTime = performance.now();
-      
+
       const result = fn();
-      
+
       if (result instanceof Promise) {
         return result.finally(() => {
           const duration = performance.now() - startTime;
@@ -157,7 +159,7 @@ export function useErrorBoundary(componentName: string) {
   const handleError = (error: Error, errorInfo: any) => {
     hasError.value = true;
     errorInfo.value = errorInfo;
-    
+
     trackError(error, {
       componentName,
       errorInfo,
@@ -196,7 +198,11 @@ export function useUserBehavior() {
     });
   };
 
-  const trackFormSubmit = (formName: string, success: boolean, metadata?: any) => {
+  const trackFormSubmit = (
+    formName: string,
+    success: boolean,
+    metadata?: any,
+  ) => {
     trackUserAction('form-submit', formName, {
       ...metadata,
       success,
@@ -227,7 +233,7 @@ export function useNetworkMonitor() {
   const trackAPICall = async <T>(
     url: string,
     options: RequestInit,
-    fetchFn: (url: string, options: RequestInit) => Promise<T>
+    fetchFn: (url: string, options: RequestInit) => Promise<T>,
   ): Promise<T> => {
     const startTime = performance.now();
     const requestId = Math.random().toString(36).substr(2, 9);
@@ -274,4 +280,4 @@ export function useNetworkMonitor() {
   return {
     trackAPICall,
   };
-} 
+}

@@ -1,21 +1,21 @@
 // 监控系统配置文件
 export interface MonitorConfig {
-  dsn: string
-  appName: string
-  appVersion: string
-  debug: boolean
-  sampleRate: number
-  timeout?: number
-  maxQueueLength?: number
-  beforeSendData?: (data: any) => any
-  afterSendData?: (result: any) => void
+  dsn: string;
+  appName: string;
+  appVersion: string;
+  debug: boolean;
+  sampleRate: number;
+  timeout?: number;
+  maxQueueLength?: number;
+  beforeSendData?: (data: any) => any;
+  afterSendData?: (result: any) => void;
 }
 
 export interface ErrorPluginConfig {
-  captureUnhandledRejections?: boolean
-  captureConsoleErrors?: boolean
-  maxStackTraceLength?: number
-  filterErrors?: (error: Error) => boolean
+  captureUnhandledRejections?: boolean;
+  captureConsoleErrors?: boolean;
+  maxStackTraceLength?: number;
+  filterErrors?: (error: Error) => boolean;
 }
 
 // 开发环境配置
@@ -28,13 +28,13 @@ export const developmentConfig: MonitorConfig = {
   timeout: 5000,
   maxQueueLength: 100,
   beforeSendData: (data) => {
-    console.log('[Monitor] 发送数据:', data)
-    return data
+    console.log('[Monitor] 发送数据:', data);
+    return data;
   },
   afterSendData: (result) => {
-    console.log('[Monitor] 发送结果:', result)
-  }
-}
+    console.log('[Monitor] 发送结果:', result);
+  },
+};
 
 // 生产环境配置
 export const productionConfig: MonitorConfig = {
@@ -47,16 +47,19 @@ export const productionConfig: MonitorConfig = {
   maxQueueLength: 50,
   beforeSendData: (data) => {
     // 生产环境可以进行数据脱敏处理
-    const sanitizedData = { ...data }
-    
+    const sanitizedData = { ...data };
+
     // 移除敏感信息
     if (sanitizedData.userAgent) {
-      sanitizedData.userAgent = sanitizedData.userAgent.replace(/\d+\.\d+\.\d+\.\d+/g, '[IP]')
+      sanitizedData.userAgent = sanitizedData.userAgent.replace(
+        /\d+\.\d+\.\d+\.\d+/g,
+        '[IP]',
+      );
     }
-    
-    return sanitizedData
-  }
-}
+
+    return sanitizedData;
+  },
+};
 
 // 错误插件配置
 export const errorPluginConfig: ErrorPluginConfig = {
@@ -68,41 +71,41 @@ export const errorPluginConfig: ErrorPluginConfig = {
     const ignoredMessages = [
       'Script error',
       'ResizeObserver loop limit exceeded',
-      'Non-Error promise rejection captured'
-    ]
-    
-    return !ignoredMessages.some(msg => error.message.includes(msg))
-  }
-}
+      'Non-Error promise rejection captured',
+    ];
+
+    return !ignoredMessages.some((msg) => error.message.includes(msg));
+  },
+};
 
 // 根据环境获取配置
 export const getMonitorConfig = (): MonitorConfig => {
-  const isDevelopment = import.meta.env.DEV
-  
+  const isDevelopment = import.meta.env.DEV;
+
   // 优先使用环境变量
   const envConfig: Partial<MonitorConfig> = {
     dsn: import.meta.env.VITE_MONITOR_DSN,
     appName: import.meta.env.VITE_APP_NAME,
     appVersion: import.meta.env.VITE_APP_VERSION,
-  }
-  
-  const baseConfig = isDevelopment ? developmentConfig : productionConfig
-  
+  };
+
+  const baseConfig = isDevelopment ? developmentConfig : productionConfig;
+
   return {
     ...baseConfig,
     ...Object.fromEntries(
-      Object.entries(envConfig).filter(([_, value]) => value !== undefined)
-    )
-  }
-}
+      Object.entries(envConfig).filter(([_, value]) => value !== undefined),
+    ),
+  };
+};
 
 // 使用示例配置的工厂函数
 export const createMonitorInstance = () => {
-  const config = getMonitorConfig()
-  
+  const config = getMonitorConfig();
+
   return {
     config,
     errorPluginConfig,
     // 可以在这里添加其他插件配置
-  }
-} 
+  };
+};

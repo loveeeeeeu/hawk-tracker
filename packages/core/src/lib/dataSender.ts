@@ -56,7 +56,6 @@ export class DataSender {
       maxConcurrentRequests: config.maxConcurrentRequests ?? 3,
       offlineStorageKey: config.offlineStorageKey ?? 'sdk_report_queue',
       debug: config.debug ?? false,
-
     };
 
     if (this.config.debug) {
@@ -85,7 +84,12 @@ export class DataSender {
    * 无返回值
    * 说明： 将数据入队，如果isImmediate为true，则立即触发上报
    */
-  public sendData(type: string, subType: string, data: any, isImmediate: boolean = false): void {
+  public sendData(
+    type: string,
+    subType: string,
+    data: any,
+    isImmediate: boolean = false,
+  ): void {
     // 采样过滤
     if (Math.random() > this.config.sampleRate) {
       this.log('info', `Data dropped due to sampling:`, data);
@@ -150,10 +154,10 @@ export class DataSender {
     const dataToSend = this.queue.splice(0, this.config.batchSize);
     const finalData = {
       dataQueue: dataToSend,
-      baseInfo:{ ...this.getBaseInfo(),sendTime: Date.now()},
-    }
+      baseInfo: { ...this.getBaseInfo(), sendTime: Date.now() },
+    };
     this.concurrentRequests++;
-    this.log( 
+    this.log(
       'info',
       `Flushing ${dataToSend.length} items from queue. Concurrent requests: ${this.concurrentRequests}`,
     );
@@ -177,7 +181,10 @@ export class DataSender {
   }
 
   // 传输通道，选择最合适的传输方式
-  private async transport(data: {dataQueue: ReportData[], baseInfo: Record<string, any>}): Promise<void> {
+  private async transport(data: {
+    dataQueue: ReportData[];
+    baseInfo: Record<string, any>;
+  }): Promise<void> {
     const payload = JSON.stringify(data);
 
     // 使用 pako 进行 gzip 压缩
@@ -261,10 +268,10 @@ export class DataSender {
 
   // 辅助方法，获取基础信息
   private getBaseInfo(): Record<string, any> {
-    const { baseInfo = {} } =   $sdkInstance || {};
+    const { baseInfo = {} } = $sdkInstance || {};
     return {
       ...baseInfo,
-      timestamp: Date.now()
+      timestamp: Date.now(),
       // IP 和会话 ID 等通常在后端通过请求头获取，前端无法直接获取
       // 这里可以放置会话 ID 或其他客户端信息
     };

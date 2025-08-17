@@ -12,38 +12,47 @@ export function useMonitor() {
     reportCustomEvent(eventName, data);
   }, []);
 
-  const trackPageView = useCallback((pageName: string, extra?: any) => {
-    if (monitor) {
-      monitor.track('behavior', {
-        type: 'pageView',
-        pageName,
-        url: window.location.href,
-        timestamp: Date.now(),
-        ...extra,
-      });
-    }
-  }, [monitor]);
+  const trackPageView = useCallback(
+    (pageName: string, extra?: any) => {
+      if (monitor) {
+        monitor.track('behavior', {
+          type: 'pageView',
+          pageName,
+          url: window.location.href,
+          timestamp: Date.now(),
+          ...extra,
+        });
+      }
+    },
+    [monitor],
+  );
 
-  const trackClick = useCallback((element: string, extra?: any) => {
-    if (monitor) {
-      monitor.track('behavior', {
-        type: 'click',
-        element,
-        url: window.location.href,
-        timestamp: Date.now(),
-        ...extra,
-      });
-    }
-  }, [monitor]);
+  const trackClick = useCallback(
+    (element: string, extra?: any) => {
+      if (monitor) {
+        monitor.track('behavior', {
+          type: 'click',
+          element,
+          url: window.location.href,
+          timestamp: Date.now(),
+          ...extra,
+        });
+      }
+    },
+    [monitor],
+  );
 
-  const trackPerformance = useCallback((metrics: any) => {
-    if (monitor) {
-      monitor.track('performance', {
-        ...metrics,
-        timestamp: Date.now(),
-      });
-    }
-  }, [monitor]);
+  const trackPerformance = useCallback(
+    (metrics: any) => {
+      if (monitor) {
+        monitor.track('performance', {
+          ...metrics,
+          timestamp: Date.now(),
+        });
+      }
+    },
+    [monitor],
+  );
 
   return {
     monitor,
@@ -53,4 +62,4 @@ export function useMonitor() {
     trackClick,
     trackPerformance,
   };
-} 
+}
