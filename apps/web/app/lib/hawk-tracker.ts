@@ -12,7 +12,7 @@ let hawkTracker: any;
 if (isClient) {
   // 只在客户端初始化
   console.log('🦅 Hawk Tracker: 客户端环境，开始初始化...');
-  
+
   // 初始化 Hawk Tracker
   hawkTracker = init({
     dsn: 'https://your-dsn.com', // 上报地址
@@ -41,7 +41,7 @@ if (isClient) {
       appVersion: '1.0.0',
       userUuid: 'web-user-001',
       debug: true,
-      sampleRate: 1
+      sampleRate: 1,
     });
   }
 } else {
@@ -52,4 +52,3 @@ if (isClient) {
     track: () => {},
   };
 }
-
