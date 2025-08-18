@@ -6,8 +6,8 @@ import { sdkWatcherPlugin } from './vite-plugin-sdk-watcher';
 
 export default defineConfig({
   plugins: [
-    tailwindcss(), 
-    reactRouter(), 
+    tailwindcss(),
+    reactRouter(),
     tsconfigPaths(),
     sdkWatcherPlugin(), // 添加 SDK 监听插件
   ],
