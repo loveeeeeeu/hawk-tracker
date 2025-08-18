@@ -1,5 +1,7 @@
-import type { Route } from "./+types/home";
+// import type { Route } from "./+types/home";
 import { Welcome } from "../welcome/welcome";
+import DashboardPage from "@/views/dashboardPage/DashboardPage";
+import { Route } from ".react-router/types/app/+types/root";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -9,5 +11,7 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  return <Welcome />;
+  return <DashboardPage/>
+  
+  // return <Welcome />;
 }
