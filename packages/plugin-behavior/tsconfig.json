@@ -1,0 +1,14 @@
+{
+  "extends": "@workspace/typescript-config/react-library.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "../core/src",
+    "baseUrl": ".",
+    "paths": {
+      "@hawk-tracker/core": ["../core/src/index.ts"],
+      "@hawk-tracker/core/*": ["../core/src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

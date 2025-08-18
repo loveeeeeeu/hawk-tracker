@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@hawk-tracker/core": "workspace:*",
-    "@hawk-tracker/plugin-error": "workspace:*"
+    "@hawk-tracker/plugin-error": "workspace:*",
+    "@hawk-tracker/plugin-behavior": "workspace:*"
   },
   "devDependencies": {
     "vite": "^4.0.0"
