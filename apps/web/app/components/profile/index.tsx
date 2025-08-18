@@ -6,7 +6,7 @@ interface UserProfile {
   email: string;
   avatar?: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt: string
 }
 
 export function Profile() {
