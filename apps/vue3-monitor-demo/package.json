@@ -4,12 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc && vite build",
+    "build": "react-router build",
+    "dev": "react-router dev",
+    "dev:with-sdk": "pnpm -r --parallel --filter @hawk-tracker/core --filter @hawk-tracker/plugin-error run dev & pnpm run dev",
+    "start": "react-router-serve ./build/server/index.js",
+    "typecheck": "react-router typegen && tsc",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
-    "type-check": "vue-tsc --noEmit",
-    "dev:with-sdk": "pnpm -r --parallel --filter @hawk-tracker/core --filter @hawk-tracker/plugin-error run dev & vite"
+    "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
     "vue": "^3.4.0",

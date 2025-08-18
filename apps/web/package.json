@@ -5,8 +5,7 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
-    "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "dev:with-sdk": "turbo run dev --parallel --filter=@hawk-tracker/core --filter=@hawk-tracker/plugin-error --filter=@hawk-tracker/web"
   },
   "dependencies": {
     "@hawk-tracker/core": "workspace:*",
@@ -15,16 +14,17 @@
     "@react-router/serve": "^7.7.1",
     "@workspace/api": "workspace:*",
     "@workspace/ui": "workspace:*",
-    "@hawk-tracker/core": "workspace:*",
-    "@hawk-tracker/plugin-error": "workspace:*",
     "isbot": "^5.1.27",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router": "^7.7.1",
-    "react-router-dom": "^7.8.0"
+    "react-router": "^7.7.1"
   },
   "devDependencies": {
     "@react-router/dev": "^7.8.0",
+    "@babel/core": "^7.28.0",
+    "@babel/preset-env": "^7.28.0",
+    "@babel/preset-react": "^7.27.1",
+    "@babel/preset-typescript": "^7.27.1",
     "@tailwindcss/vite": "^4.1.11",
     "@types/node": "^20",
     "@types/react": "^19.1.2",

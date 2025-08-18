@@ -10,7 +10,6 @@ import { setGlobalHawkTracker, getGlobalHawkTracker } from './utils/global';
 console.log(
   '🔥 Core package hot reload test - ' + new Date().toLocaleTimeString(),
 );
-
 export class HawkTracker {
   config: InternalConfig; // 配置项
   dataSender: DataSender;
