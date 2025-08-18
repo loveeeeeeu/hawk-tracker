@@ -11,5 +11,5 @@ export default [
   {
     path: '/register',
     file: 'routes/register.tsx',
-  },
+  }
 ] satisfies RouteConfig;
