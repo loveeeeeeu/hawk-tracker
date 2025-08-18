@@ -1,0 +1,33 @@
+[1mdiff --cc apps/web/app/routes.ts[m
+[1mindex 0ab7724,7cd69cc..0000000[m
+[1m--- a/apps/web/app/routes.ts[m
+[1m+++ b/apps/web/app/routes.ts[m
+[36m@@@ -1,12 -1,15 +1,13 @@@[m
+[31m -import { type RouteConfig, index,route } from '@react-router/dev/routes';[m
+[32m +import { type RouteConfig, route } from '@react-router/dev/routes';[m
+  [m
+  export default [[m
+[31m -    index('routes/home.tsx'),[m
+[31m -    route('profile', 'components/profile/index.tsx'),[m
+[31m -    route('projects/:projectId/settings', 'components/projects/[projectId]/settings/page.tsx')[m
+[31m -  {[m
+[31m -    path: '/login',[m
+[31m -    file: 'routes/login.tsx',[m
+[31m -  },[m
+[31m -  {[m
+[31m -    path: '/register',[m
+[31m -    file: 'routes/register.tsx',[m
+[31m -  },[m
+[32m +  route('/', 'routes/home.tsx'),[m
+[32m +  route('/project', 'routes/project.tsx'),[m
+[32m +  route('/project/:id', 'routes/project.$id.tsx'),[m
+[31m-   route('/project/:id/overview', 'routes/project.$id.overview.tsx'), // 添加概览页面路由[m
+[31m-   route('/project/:id/errors', 'routes/project.$id.errors.tsx'), // 添加错误日志页面路由[m
+[32m++  route('/project/:id/overview', 'routes/project.$id.overview.tsx'),[m
+[32m++  route('/project/:id/errors', 'routes/project.$id.errors.tsx'),[m
+[32m++  route('/project/:id/errors/:errorId', 'routes/project.$id.errors.$errorId.tsx'),[m
+[32m +  route('/project/:id/settings', 'routes/project.$id.settings.tsx'),[m
+[32m +  route('/project/:id/trackings', 'routes/project.$id.trackings.tsx'),[m
+[31m-   route('/test-error', 'routes/test-error.tsx'), // 可选：独立的测试页面[m
+[32m++  route('/test-error', 'routes/test-error.tsx'),[m
+  ] satisfies RouteConfig;[m

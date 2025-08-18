@@ -12,6 +12,8 @@
     "dev": "turbo run dev",
     "dev:web": "turbo run dev:web",
     "dev:server": "turbo run dev:server",
+    "dev:with-sdk": "pnpm -r --parallel --filter @hawk-tracker/core --filter @hawk-tracker/plugin-error run dev & pnpm run dev:web",
+    "dev:all": "pnpm -r --parallel --filter @hawk-tracker/core --filter @hawk-tracker/plugin-error run dev & pnpm run dev:web & pnpm run dev:server",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "format": "prettier --write \"**/*.{ts,js,json,md}\"",
