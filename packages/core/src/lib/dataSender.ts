@@ -1,17 +1,18 @@
 import pako from 'pako';
 import { _global } from '../utils';
 import { log } from '../utils/debug';
+import { $sdkInstance } from '../utils/global';
+import { generateUUID } from '../utils/common';
 
 // 定义上报数据的类型
 type ReportData = {
   // 数据类型，如 'error', 'performance', 'behavior'
   type: string;
+  subType: string;
   // 实际数据
   data: any;
   // 时间戳
   timestamp: number;
-  // 基础信息，如页面 URL、会话 ID 等
-  baseInfo: Record<string, any>;
   // 是否需要立即上报，用于高优先级数据
   isImmediate: boolean;
   // 当前重试次数
@@ -74,7 +75,21 @@ export class DataSender {
   }
 
   // 对外暴露的唯一接口
-  public sendData(type: string, data: any, isImmediate: boolean = false): void {
+  /*
+   * 参数：
+   * type: 数据类型
+   * data: 数据
+   * isImmediate: 是否立即上报
+   * 返回值：
+   * 无返回值
+   * 说明： 将数据入队，如果isImmediate为true，则立即触发上报
+   */
+  public sendData(
+    type: string,
+    subType: string,
+    data: any,
+    isImmediate: boolean = false,
+  ): void {
     // 采样过滤
     if (Math.random() > this.config.sampleRate) {
       this.log('info', `Data dropped due to sampling:`, data);
@@ -84,11 +99,11 @@ export class DataSender {
     // 封装基础信息
     const reportData: ReportData = {
       type,
-      data,
+      subType,
+      ...data,
       timestamp: Date.now(),
-      baseInfo: this.getBaseInfo(),
-      isImmediate,
       retryCount: 0,
+      eventId: generateUUID(),
     };
 
     // 将数据入队
@@ -137,7 +152,10 @@ export class DataSender {
 
     // 从队列头部取出一定数量的数据
     const dataToSend = this.queue.splice(0, this.config.batchSize);
-
+    const finalData = {
+      dataQueue: dataToSend,
+      baseInfo: { ...this.getBaseInfo(), sendTime: Date.now() },
+    };
     this.concurrentRequests++;
     this.log(
       'info',
@@ -145,7 +163,7 @@ export class DataSender {
     );
 
     try {
-      await this.transport(dataToSend);
+      await this.transport(finalData);
       this.log('info', `Successfully sent ${dataToSend.length} items.`);
     } catch (error) {
       // 失败时，将数据放回队列，并增加重试次数
@@ -163,7 +181,10 @@ export class DataSender {
   }
 
   // 传输通道，选择最合适的传输方式
-  private async transport(data: ReportData[]): Promise<void> {
+  private async transport(data: {
+    dataQueue: ReportData[];
+    baseInfo: Record<string, any>;
+  }): Promise<void> {
     const payload = JSON.stringify(data);
 
     // 使用 pako 进行 gzip 压缩
@@ -247,9 +268,10 @@ export class DataSender {
 
   // 辅助方法，获取基础信息
   private getBaseInfo(): Record<string, any> {
+    const { baseInfo = {} } = $sdkInstance || {};
     return {
-      pageUrl: _global.location.href,
-      userAgent: navigator.userAgent,
+      ...baseInfo,
+      timestamp: Date.now(),
       // IP 和会话 ID 等通常在后端通过请求头获取，前端无法直接获取
       // 这里可以放置会话 ID 或其他客户端信息
     };

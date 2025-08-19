@@ -1,6 +1,15 @@
-import { type RouteConfig, route } from '@react-router/dev/routes';
+import { type RouteConfig, index, route } from '@react-router/dev/routes';
 
 export default [
-  route('/', 'routes/home.tsx'),
-  // 项目详情主路由
+	index('routes/home.tsx'),
+	route('profile', 'components/profile/index.tsx'),
+	route('projects/:projectId/settings', 'components/projects/[projectId]/settings/page.tsx'),
+  {
+    path: '/login',
+    file: 'routes/login.tsx',
+  },
+  {
+    path: '/register',
+    file: 'routes/register.tsx',
+  }
 ] satisfies RouteConfig;
