@@ -132,6 +132,12 @@ export class DataSender {
     if (this.timer !== null) return;
 
     const tick = () => {
+      // 智能调度：如果队列为空或并发数已达上限，跳过本次执行
+      if (this.queue.length === 0 || this.concurrentRequests >= this.config.maxConcurrentRequests) {
+        this.log('info', `Skipping flush: queue=${this.queue.length}, concurrent=${this.concurrentRequests}`);
+        return;
+      }
+      
       // 在浏览器空闲时触发上报，最大化性能
       // requestIdleCallback 仅在浏览器有空闲时间时才会执行
       if ('requestIdleCallback' in window) {
