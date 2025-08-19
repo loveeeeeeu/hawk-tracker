@@ -1,9 +1,12 @@
 import { type RouteConfig, index, route } from '@react-router/dev/routes';
 
 export default [
-    index('routes/home.tsx'),
-    route('profile', 'components/profile/index.tsx'),
-    route('projects/:projectId/setting', 'components/projects/[projectId]/settings/page.tsx'),
+  route('/', 'routes/home.tsx'),
+  route('profile', 'components/profile/index.tsx'),
+  route(
+    'projects/:projectId/setting',
+    'components/projects/[projectId]/settings/page.tsx',
+  ),
   {
     path: '/login',
     file: 'routes/login.tsx',
@@ -13,7 +16,6 @@ export default [
     file: 'routes/register.tsx',
   },
 
-  route('/', 'routes/home.tsx'),
   route('/project', 'routes/project.tsx'),
   route('/project/:id', 'routes/project.$id.tsx'),
   route('/project/:id/overview', 'routes/project.$id.overview.tsx'),
