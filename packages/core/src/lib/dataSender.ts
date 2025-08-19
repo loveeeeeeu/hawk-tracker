@@ -133,11 +133,17 @@ export class DataSender {
 
     const tick = () => {
       // 智能调度：如果队列为空或并发数已达上限，跳过本次执行
-      if (this.queue.length === 0 || this.concurrentRequests >= this.config.maxConcurrentRequests) {
-        this.log('info', `Skipping flush: queue=${this.queue.length}, concurrent=${this.concurrentRequests}`);
+      if (
+        this.queue.length === 0 ||
+        this.concurrentRequests >= this.config.maxConcurrentRequests
+      ) {
+        this.log(
+          'info',
+          `Skipping flush: queue=${this.queue.length}, concurrent=${this.concurrentRequests}`,
+        );
         return;
       }
-      
+
       // 在浏览器空闲时触发上报，最大化性能
       // requestIdleCallback 仅在浏览器有空闲时间时才会执行
       if ('requestIdleCallback' in window) {
@@ -272,7 +278,7 @@ export class DataSender {
         'warn',
         `Payload size exceeds sendBeacon limit, falling back to fetch.`,
       );
-      await fetch(this.config.dsn, {
+      const response = await fetch(this.config.dsn, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -280,9 +286,16 @@ export class DataSender {
         },
         body: compressedPayload as any,
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
     } else {
       // 优先使用 sendBeacon
-      (navigator as any).sendBeacon(this.config.dsn, compressedPayload as any);
+      const success = (navigator as any).sendBeacon(this.config.dsn, compressedPayload as any);
+      if (!success) {
+        throw new Error('sendBeacon failed');
+      }
     }
   }
 
