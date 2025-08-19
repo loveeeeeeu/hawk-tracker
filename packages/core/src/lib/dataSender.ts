@@ -100,8 +100,8 @@ export class DataSender {
     data: any,
     isImmediate: boolean = false,
   ): void {
-    // 采样过滤
-    if (Math.random() > this.config.sampleRate) {
+    // 立即事件跳过采样过滤
+    if (!isImmediate && Math.random() > this.config.sampleRate) {
       this.log('info', `Data dropped due to sampling:`, data);
       return;
     }
@@ -116,13 +116,14 @@ export class DataSender {
       eventId: generateUUID(),
     } as any;
 
-    // 将数据入队
-    this.queue.push(reportData);
-    this.log('info', `Added data to queue:`, reportData);
-
-    // 立即触发上报
+    // 立即事件插入队列头部，普通事件追加到尾部
     if (isImmediate) {
+      this.queue.unshift(reportData);
+      this.log('info', `Added immediate data to queue head:`, reportData);
       this.flush();
+    } else {
+      this.queue.push(reportData);
+      this.log('info', `Added data to queue:`, reportData);
     }
   }
 
@@ -182,7 +183,9 @@ export class DataSender {
     } catch (error) {
       // 失败时，将数据放回队列，并增加重试次数
       this.log('error', `Failed to send data, error:`, error);
-      dataToSend.forEach((item) => (item.retryCount = (item.retryCount || 0) + 1));
+      dataToSend.forEach(
+        (item) => (item.retryCount = (item.retryCount || 0) + 1),
+      );
 
       // 根据最大重试次数拆分：继续重试 vs 归档离线
       const toRetry: ReportData[] = [];
@@ -197,7 +200,10 @@ export class DataSender {
 
       if (toArchive.length > 0) {
         this.saveToOfflineStorage(toArchive);
-        this.log('warn', `Archived ${toArchive.length} items after exceeding maxRetry=${this.config.maxRetry}.`);
+        this.log(
+          'warn',
+          `Archived ${toArchive.length} items after exceeding maxRetry=${this.config.maxRetry}.`,
+        );
       }
 
       if (toRetry.length > 0) {
@@ -209,10 +215,16 @@ export class DataSender {
         this.log('warn', 'Network offline, waiting for online event to retry.');
       } else if (toRetry.length > 0 || this.queue.length > 0) {
         // 在线失败：按照指数退避重试
-        const maxRetryCount = toRetry.length > 0 ? Math.max(...toRetry.map((i) => i.retryCount || 1)) : 1;
+        const maxRetryCount =
+          toRetry.length > 0
+            ? Math.max(...toRetry.map((i) => i.retryCount || 1))
+            : 1;
         const base = this.config.backoffBaseMs;
         const cap = this.config.backoffMaxMs;
-        const delay = Math.min(base * Math.pow(2, Math.max(0, maxRetryCount - 1)), cap);
+        const delay = Math.min(
+          base * Math.pow(2, Math.max(0, maxRetryCount - 1)),
+          cap,
+        );
         const jitter = Math.floor(Math.random() * Math.floor(delay * 0.2));
         this.scheduleRetry(delay + jitter);
       }
