@@ -286,13 +286,16 @@ export class DataSender {
         },
         body: compressedPayload as any,
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } else {
       // 优先使用 sendBeacon
-      const success = (navigator as any).sendBeacon(this.config.dsn, compressedPayload as any);
+      const success = (navigator as any).sendBeacon(
+        this.config.dsn,
+        compressedPayload as any,
+      );
       if (!success) {
         throw new Error('sendBeacon failed');
       }
