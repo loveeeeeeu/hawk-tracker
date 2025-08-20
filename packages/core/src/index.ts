@@ -7,6 +7,7 @@ import { nativeTryCatch } from './utils/exceptions';
 import { setConfig, getConfig } from './common/config';
 import { initBaseInfo } from './common/base';
 import { setGlobalHawkTracker, getGlobalHawkTracker } from './utils/global';
+import { SnapshotOptions } from './types/behavior';
 
 console.log(
   '🔥 Core package hot reload test - ' + new Date().toLocaleTimeString(),
@@ -29,14 +30,14 @@ export class HawkTracker {
       // ... 其他 DataSender 需要的配置
     });
     this.eventCenter = eventCenter;
-    
-       // 初始化行为栈管理器
-       this.behaviorStackManager = new BehaviorStackManager({
-        maxSize: configs.behavior?.maxSize ?? 100,
-        maxAge: configs.behavior?.maxAge ?? 5 * 60 * 1000,
-        debug: configs.behavior?.debug ?? configs.debug ?? false
-      });
-    
+
+    // 初始化行为栈管理器
+    this.behaviorStackManager = new BehaviorStackManager({
+      maxSize: configs.behavior?.maxSize ?? 100,
+      maxAge: configs.behavior?.maxAge ?? 5 * 60 * 1000,
+      debug: configs.behavior?.debug ?? configs.debug ?? false,
+    });
+
     this.baseInfo = initBaseInfo(configs);
   }
 
@@ -79,6 +80,26 @@ export class HawkTracker {
    */
   public getOrCreateBehaviorStack(name: string, config?: any) {
     return this.behaviorStackManager.getOrCreateBehaviorStack(name, config);
+  }
+
+  // 便捷方法：对外暴露“像数组一样”的默认行为栈操作
+  public pushBehavior(event: { type: string; context?: Record<string, any>; pageUrl?: string }, stackName: string = 'user_behavior'): boolean {
+    const stack = this.getOrCreateBehaviorStack(stackName);
+    return stack.addEvent({
+      type: event.type,
+      pageUrl: event.pageUrl || (typeof window !== 'undefined' ? window.location.href : ''),
+      context: event.context || {},
+    });
+  }
+
+  public getBehaviors(options: SnapshotOptions = {}, stackName: string = 'user_behavior') {
+    const stack = this.getOrCreateBehaviorStack(stackName);
+    return stack.getSnapshot(options);
+  }
+
+  public clearBehaviors(stackName: string = 'user_behavior') {
+    const stack = this.getOrCreateBehaviorStack(stackName);
+    stack.clear();
   }
 }
 

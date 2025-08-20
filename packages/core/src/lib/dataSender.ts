@@ -100,8 +100,8 @@ export class DataSender {
     data: any,
     isImmediate: boolean = false,
   ): void {
-    // 采样过滤
-    if (Math.random() > this.config.sampleRate) {
+    // 立即事件跳过采样过滤
+    if (!isImmediate && Math.random() > this.config.sampleRate) {
       this.log('info', `Data dropped due to sampling:`, data);
       return;
     }
@@ -116,13 +116,14 @@ export class DataSender {
       eventId: generateUUID(),
     } as any;
 
-    // 将数据入队
-    this.queue.push(reportData);
-    this.log('info', `Added data to queue:`, reportData);
-
-    // 立即触发上报
+    // 立即事件插入队列头部，普通事件追加到尾部
     if (isImmediate) {
+      this.queue.unshift(reportData);
+      this.log('info', `Added immediate data to queue head:`, reportData);
       this.flush();
+    } else {
+      this.queue.push(reportData);
+      this.log('info', `Added data to queue:`, reportData);
     }
   }
 
@@ -131,6 +132,18 @@ export class DataSender {
     if (this.timer !== null) return;
 
     const tick = () => {
+      // 智能调度：如果队列为空或并发数已达上限，跳过本次执行
+      if (
+        this.queue.length === 0 ||
+        this.concurrentRequests >= this.config.maxConcurrentRequests
+      ) {
+        this.log(
+          'info',
+          `Skipping flush: queue=${this.queue.length}, concurrent=${this.concurrentRequests}`,
+        );
+        return;
+      }
+
       // 在浏览器空闲时触发上报，最大化性能
       // requestIdleCallback 仅在浏览器有空闲时间时才会执行
       if ('requestIdleCallback' in window) {
@@ -182,7 +195,9 @@ export class DataSender {
     } catch (error) {
       // 失败时，将数据放回队列，并增加重试次数
       this.log('error', `Failed to send data, error:`, error);
-      dataToSend.forEach((item) => (item.retryCount = (item.retryCount || 0) + 1));
+      dataToSend.forEach(
+        (item) => (item.retryCount = (item.retryCount || 0) + 1),
+      );
 
       // 根据最大重试次数拆分：继续重试 vs 归档离线
       const toRetry: ReportData[] = [];
@@ -197,7 +212,10 @@ export class DataSender {
 
       if (toArchive.length > 0) {
         this.saveToOfflineStorage(toArchive);
-        this.log('warn', `Archived ${toArchive.length} items after exceeding maxRetry=${this.config.maxRetry}.`);
+        this.log(
+          'warn',
+          `Archived ${toArchive.length} items after exceeding maxRetry=${this.config.maxRetry}.`,
+        );
       }
 
       if (toRetry.length > 0) {
@@ -209,10 +227,16 @@ export class DataSender {
         this.log('warn', 'Network offline, waiting for online event to retry.');
       } else if (toRetry.length > 0 || this.queue.length > 0) {
         // 在线失败：按照指数退避重试
-        const maxRetryCount = toRetry.length > 0 ? Math.max(...toRetry.map((i) => i.retryCount || 1)) : 1;
+        const maxRetryCount =
+          toRetry.length > 0
+            ? Math.max(...toRetry.map((i) => i.retryCount || 1))
+            : 1;
         const base = this.config.backoffBaseMs;
         const cap = this.config.backoffMaxMs;
-        const delay = Math.min(base * Math.pow(2, Math.max(0, maxRetryCount - 1)), cap);
+        const delay = Math.min(
+          base * Math.pow(2, Math.max(0, maxRetryCount - 1)),
+          cap,
+        );
         const jitter = Math.floor(Math.random() * Math.floor(delay * 0.2));
         this.scheduleRetry(delay + jitter);
       }
@@ -254,7 +278,7 @@ export class DataSender {
         'warn',
         `Payload size exceeds sendBeacon limit, falling back to fetch.`,
       );
-      await fetch(this.config.dsn, {
+      const response = await fetch(this.config.dsn, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -262,9 +286,16 @@ export class DataSender {
         },
         body: compressedPayload as any,
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
     } else {
       // 优先使用 sendBeacon
-      (navigator as any).sendBeacon(this.config.dsn, compressedPayload as any);
+      const success = (navigator as any).sendBeacon(this.config.dsn, compressedPayload as any);
+      if (!success) {
+        throw new Error('sendBeacon failed');
+      }
     }
   }
 
