@@ -83,16 +83,24 @@ export class HawkTracker {
   }
 
   // 便捷方法：对外暴露“像数组一样”的默认行为栈操作
-  public pushBehavior(event: { type: string; context?: Record<string, any>; pageUrl?: string }, stackName: string = 'user_behavior'): boolean {
+  public pushBehavior(
+    event: { type: string; context?: Record<string, any>; pageUrl?: string },
+    stackName: string = 'user_behavior',
+  ): boolean {
     const stack = this.getOrCreateBehaviorStack(stackName);
     return stack.addEvent({
       type: event.type,
-      pageUrl: event.pageUrl || (typeof window !== 'undefined' ? window.location.href : ''),
+      pageUrl:
+        event.pageUrl ||
+        (typeof window !== 'undefined' ? window.location.href : ''),
       context: event.context || {},
     });
   }
 
-  public getBehaviors(options: SnapshotOptions = {}, stackName: string = 'user_behavior') {
+  public getBehaviors(
+    options: SnapshotOptions = {},
+    stackName: string = 'user_behavior',
+  ) {
     const stack = this.getOrCreateBehaviorStack(stackName);
     return stack.getSnapshot(options);
   }
