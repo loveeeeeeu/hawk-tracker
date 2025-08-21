@@ -3,7 +3,7 @@ import { record } from 'rrweb';
 
 type RrwebPluginOptions = {
   maxEvents?: number;
-  sampling?: Parameters<typeof record>[0]['sampling'];
+  sampling?: NonNullable<Parameters<typeof record>[0]>['sampling'];
   emit?: (event: any) => void;
 };
 
@@ -19,7 +19,7 @@ export class RrwebPlugin extends BasePlugin {
       sampling: options.sampling ?? {
         mousemove: 50,
         scroll: 50,
-        media: true,
+        media: 50,
         input: 'last',
       },
       emit: options.emit ?? (() => {}),
@@ -30,7 +30,7 @@ export class RrwebPlugin extends BasePlugin {
     if (typeof window === 'undefined') return;
     if (this.stopFn) return;
 
-    this.stopFn = record({
+    const stop = record({
       sampling: this.options.sampling,
       emit: (e: any) => {
         this.events.push(e);
@@ -40,6 +40,9 @@ export class RrwebPlugin extends BasePlugin {
         this.options.emit(e);
       },
     });
+    if (stop) {
+      this.stopFn = stop;
+    }
 
     (window as any).$hawkRrweb = {
       getReplay: ({ maxSize = this.options.maxEvents } = {}) => {
