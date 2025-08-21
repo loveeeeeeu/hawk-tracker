@@ -1,4 +1,5 @@
 // 框架错误接入辅助方法
+import { SEND_SUB_TYPES } from '@hawk-tracker/core';
 
 export function createVueErrorHandler(core: any) {
   return function (err: any, vm?: any, info?: string) {
@@ -9,7 +10,7 @@ export function createVueErrorHandler(core: any) {
       const propsData = vm?.$options?.propsData;
       core?.dataSender?.sendData(
         'error',
-        'vue',
+        SEND_SUB_TYPES.VUE,
         {
           message,
           name: err?.name || 'VueError',
@@ -39,7 +40,7 @@ export function withReactErrorBoundary(core: any) {
         try {
           core?.dataSender?.sendData(
             'error',
-            'react',
+            SEND_SUB_TYPES.REACT,
             {
               message: error?.message || String(error),
               name: error?.name || 'ReactError',

@@ -75,7 +75,7 @@ export class ErrorPlugin extends BasePlugin {
         const payload = this.handleWindowError(event, core);
         if (!payload) return;
         const subType = payload.resource
-          ? SEND_SUB_TYPES.LOAD
+          ? SEND_SUB_TYPES.RESOURCE
           : SEND_SUB_TYPES.ERROR;
         dataSender.sendData(SEND_TYPES.ERROR, subType, payload, true);
       },
