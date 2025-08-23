@@ -3,19 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Hawk Tracker Demo</title>
+    <link rel="stylesheet" href="./index.css">
 </head>
 <body>
-    <h1>test</h1>
-    <button id="btn" style="width: 100px;height: 50px;background-color: blue;color: white;">click</button>
+    <h1>Hawk Tracker 行为栈核心机制 Demo</h1>
+    <div class="row">
+        <button id="btn" class="warning">触发错误（ErrorPlugin）</button>
+        <button id="btn-custom">添加自定义事件</button>
+        <button id="btn-fetch" class="secondary">触发 fetch 请求</button>
+        <button id="btn-pushstate" class="secondary">history.pushState</button>
+        <button id="btn-hash" class="secondary">hashchange</button>
+        <button id="btn-clear" class="secondary">清空默认栈</button>
+        <button id="btn-render">立即刷新视图</button>
+    </div>
+
+    <div class="panel">
+        <div class="card">
+            <h3>默认栈统计（core 行为栈管理器）</h3>
+            <pre id="stats-core">{}</pre>
+        </div>
+        <div class="card">
+            <h3>插件栈统计（BehaviorPlugin）</h3>
+            <pre id="stats-plugin">{}</pre>
+        </div>
+        <div class="card">
+            <h3>默认栈快照（最近 10 条）</h3>
+            <pre id="snapshot-core">[]</pre>
+        </div>
+        <div class="card">
+            <h3>插件栈快照（最近 10 条）</h3>
+            <pre id="snapshot-plugin">[]</pre>
+        </div>
+    </div>
+
     <script type="module" src="./index.js"></script>
     <script>
         const btn = document.getElementById('btn');
         btn.addEventListener('click', () => {
-            const a = {}
+            const a = {};
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            a.split('/')
+            a.split('/');
         });
     </script>
 </body>

@@ -2,6 +2,7 @@ import type { Route } from "./+types/home";
 import { Welcome } from "../welcome/welcome";
 import { useAuth } from "../contexts/AuthContext";
 import { ProtectedRoute } from "../components/ProtectedRoute";
+import DashboardPage from "@/components/dashboardPage/DashboardPage";
 
 export function meta({ }: Route.MetaArgs) {
   return [
@@ -39,7 +40,7 @@ function HomeContent() {
         </div>
       </nav>
 
-      <Welcome />
+      <DashboardPage />
     </div>
   );
 }

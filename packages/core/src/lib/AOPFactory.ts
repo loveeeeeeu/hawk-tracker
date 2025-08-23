@@ -57,6 +57,7 @@ function createEventListener(
     eventCenter.emit(type, event);
   };
 
+  // 这行代码的作用是将事件处理函数 handler 存储到 eventHandlers 对象中，key 为 eventName，方便后续移除事件监听器时能准确找到对应的 handler。
   eventHandlers[eventName as keyof typeof eventHandlers] = handler;
 
   debug.logDebug('createEventListener xxxxx', {
