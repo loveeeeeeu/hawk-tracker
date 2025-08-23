@@ -5,26 +5,41 @@
 // 1. 初始化监控
 import { init } from '@hawk-tracker/core';
 import { createVueErrorHandler } from '@hawk-tracker/plugin-error';
+import { ErrorPlugin } from '@hawk-tracker/plugin-error';
+import { RrwebPlugin } from '@hawk-tracker/plugin-rrweb';
 
 // 方式一：使用全局实例（推荐）
-init({
-  dsn: 'https://your-server.com/collect',
-  appId: 'my-vue-app',
-  version: '1.0.0'
-});
-
-// 注册错误处理器（不传参）
-Vue.config.errorHandler = createVueErrorHandler();
-
-// 方式二：传参方式
 const vueCore = init({
   dsn: 'https://your-server.com/collect',
   appId: 'my-vue-app',
   version: '1.0.0'
 });
 
+// 安装录屏插件
+vueCore.use(new RrwebPlugin({
+  preset: 'balanced',
+  maxEvents: 500
+}));
+
+// 安装错误插件，启用录屏关联
+vueCore.use(new ErrorPlugin({
+  attachRrweb: true,
+  rrwebMaxSize: 200,
+  behaviorSnapshotCount: 50
+}));
+
+// 注册错误处理器（不传参）
+Vue.config.errorHandler = createVueErrorHandler();
+
+// 方式二：传参方式
+const vueCoreWithParam = init({
+  dsn: 'https://your-server.com/collect',
+  appId: 'my-vue-app',
+  version: '1.0.0'
+});
+
 // 注册错误处理器（传参）
-Vue.config.errorHandler = createVueErrorHandler(vueCore);
+Vue.config.errorHandler = createVueErrorHandler(vueCoreWithParam);
 
 // ==================== React 使用示例 ====================
 
@@ -32,11 +47,24 @@ import React from 'react';
 import { withReactErrorBoundary } from '@hawk-tracker/plugin-error';
 
 // 方式一：使用全局实例（推荐）
-init({
+const reactCore = init({
   dsn: 'https://your-server.com/collect',
   appId: 'my-react-app',
   version: '1.0.0'
 });
+
+// 安装录屏插件
+reactCore.use(new RrwebPlugin({
+  preset: 'balanced',
+  maxEvents: 500
+}));
+
+// 安装错误插件，启用录屏关联
+reactCore.use(new ErrorPlugin({
+  attachRrweb: true,
+  rrwebMaxSize: 200,
+  behaviorSnapshotCount: 50
+}));
 
 // 原始组件
 function App() {
@@ -60,14 +88,63 @@ function App() {
 const SafeApp = withReactErrorBoundary()(App);
 
 // 方式二：传参方式
-const reactCore = init({
+const reactCoreWithParam = init({
   dsn: 'https://your-server.com/collect',
   appId: 'my-react-app',
   version: '1.0.0'
 });
 
 // 包装组件（传参）
-const SafeAppWithCore = withReactErrorBoundary(reactCore)(App);
+const SafeAppWithCore = withReactErrorBoundary(reactCoreWithParam)(App);
+
+// ==================== 错误录屏关联示例 ====================
+
+// 错误发生时，录屏插件会自动标记错误点
+// 错误数据会包含：
+// 1. rrwebSnapshot: 最近的录屏事件
+// 2. errorContext: 错误发生时的上下文信息
+// 3. 错误发生前后的用户行为
+
+// 示例：获取错误相关的录屏数据
+function demonstrateErrorRecording() {
+  // 模拟错误发生
+  try {
+    throw new Error('演示错误');
+  } catch (error) {
+    // 错误插件会自动：
+    // 1. 捕获错误
+    // 2. 标记录屏时间点
+    // 3. 收集错误上下文
+    // 4. 发送完整数据到服务器
+    
+    console.log('错误已被捕获并关联录屏数据');
+  }
+}
+
+// 手动获取录屏数据（用于调试）
+function getRecordingData() {
+  const api = window.$hawkRrweb;
+  if (api) {
+    // 获取最近的录屏事件
+    const replay = api.getReplay({ maxSize: 100 });
+    console.log('录屏回放数据:', replay);
+    
+    // 获取错误上下文
+    const errorContext = api.getErrorContext({
+      errorType: 'Error',
+      errorMessage: '测试错误',
+      timestamp: Date.now()
+    });
+    console.log('错误上下文:', errorContext);
+    
+    // 获取用户行为
+    const userBehavior = api.getErrorBehavior({
+      errorType: 'Error',
+      errorMessage: '测试错误'
+    });
+    console.log('用户行为:', userBehavior);
+  }
+}
 
 // ==================== 测试错误示例 ====================
 
@@ -79,6 +156,7 @@ const ErrorTestVue = {
       <h1>Vue 错误测试</h1>
       <button @click="testSyncError">测试同步错误</button>
       <button @click="testAsyncError">测试异步错误</button>
+      <button @click="testRecordingData">查看录屏数据</button>
     </div>
   `,
   methods: {
@@ -91,6 +169,9 @@ const ErrorTestVue = {
       } catch (error) {
         throw new Error('异步错误测试: ' + error.message);
       }
+    },
+    testRecordingData() {
+      getRecordingData();
     }
   }
 };
@@ -109,11 +190,16 @@ function ErrorTestReact() {
     }
   };
 
+  const testRecordingData = () => {
+    getRecordingData();
+  };
+
   return (
     <div>
       <h1>React 错误测试</h1>
       <button onClick={testSyncError}>测试同步错误</button>
       <button onClick={testAsyncError}>测试异步错误</button>
+      <button onClick={testRecordingData}>查看录屏数据</button>
     </div>
   );
 }
@@ -168,4 +254,4 @@ function AppWithErrorBoundaries() {
   );
 }
 
-// 这样即使某个组件出错，其他组件仍然正常工作 
+// 这样即使某个组件出错，其他组件仍然正常工作

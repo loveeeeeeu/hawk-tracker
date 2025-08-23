@@ -1,7 +1,10 @@
 import { BasePlugin, SEND_TYPES } from '@hawk-tracker/core';
 import { record } from 'rrweb';
 
-type RecordOptions = Omit<NonNullable<Parameters<typeof record>[0]>, 'emit' | 'sampling'>;
+type RecordOptions = Omit<
+  NonNullable<Parameters<typeof record>[0]>,
+  'emit' | 'sampling'
+>;
 
 type PresetName = 'privacy' | 'balanced' | 'quality';
 
@@ -39,7 +42,7 @@ type InternalOptions = {
 
 /**
  * rrweb 录屏插件
- * 用于集成 rrweb 录屏能力到 hawk-tracker 
+ * 用于集成 rrweb 录屏能力到 hawk-tracker
  */
 export class RrwebPlugin extends BasePlugin {
   /**
@@ -54,6 +57,19 @@ export class RrwebPlugin extends BasePlugin {
    * 停止录制的函数
    */
   private stopFn: (() => void) | null = null;
+  /**
+   * 错误标记点
+   */
+  private errorPoints: Array<{
+    type: string;
+    error: any;
+    timestamp: number;
+    eventIndex: number;
+  }> = [];
+  /**
+   * 当前事件索引
+   */
+  private currentEventIndex: number = 0;
 
   /**
    * 构造函数
@@ -99,10 +115,18 @@ export class RrwebPlugin extends BasePlugin {
       emit: (e: any) => {
         // 缓存事件
         this.events.push(e);
+        this.currentEventIndex++;
+        
         // 超出最大缓存数则丢弃最早的事件
         if (this.events.length > this.options.maxEvents) {
           this.events.splice(0, this.events.length - this.options.maxEvents);
+          // 调整错误标记点的索引
+          this.errorPoints = this.errorPoints.map(point => ({
+            ...point,
+            eventIndex: Math.max(0, point.eventIndex - (this.events.length - this.options.maxEvents))
+          }));
         }
+        
         // 触发自定义 emit 回调
         this.options.emit(e);
       },
@@ -122,6 +146,7 @@ export class RrwebPlugin extends BasePlugin {
         const size = Math.min(maxSize, this.events.length);
         return this.events.slice(this.events.length - size);
       },
+      
       /**
        * 停止录制
        */
@@ -131,6 +156,91 @@ export class RrwebPlugin extends BasePlugin {
           this.stopFn = null;
         }
       },
+      
+      /**
+       * 新增：标记错误发生的时间点
+       */
+      markErrorPoint: (errorInfo: { type: string; error: any; timestamp: number }) => {
+        this.errorPoints.push({
+          ...errorInfo,
+          eventIndex: this.currentEventIndex
+        });
+        
+        // 限制错误标记点数量
+        if (this.errorPoints.length > 10) {
+          this.errorPoints.shift();
+        }
+      },
+      
+      /**
+       * 新增：获取错误发生时的上下文信息
+       */
+      getErrorContext: (errorInfo: { errorType: string; errorMessage: string; timestamp: number }) => {
+        const now = Date.now();
+        const timeWindow = 30 * 1000; // 30秒内的错误
+        
+        // 找到最近的错误标记点
+        const recentErrors = this.errorPoints.filter(point => 
+          now - point.timestamp < timeWindow
+        );
+        
+        if (recentErrors.length === 0) return null;
+        
+        const latestError = recentErrors[recentErrors.length - 1];
+        if (!latestError) return null;
+        
+        // 获取错误发生前后的录屏事件
+        const beforeError = this.events.slice(
+          Math.max(0, latestError.eventIndex - 20),
+          latestError.eventIndex
+        );
+        
+        const afterError = this.events.slice(
+          latestError.eventIndex,
+          Math.min(this.events.length, latestError.eventIndex + 10)
+        );
+        
+        return {
+          errorPoint: latestError,
+          eventsBeforeError: beforeError,
+          eventsAfterError: afterError,
+          totalEvents: this.events.length,
+          errorCount: this.errorPoints.length
+        };
+      },
+      
+      /**
+       * 新增：获取错误相关的用户行为
+       */
+      getErrorBehavior: (errorInfo: { errorType: string; errorMessage: string }) => {
+        const now = Date.now();
+        const timeWindow = 60 * 1000; // 1分钟内的行为
+        
+        // 分析录屏事件，提取用户行为
+        const userActions = this.events
+          .filter(event => now - event.timestamp < timeWindow)
+          .map(event => {
+            switch (event.type) {
+              case 2: // mouse
+                return { type: 'mouse', x: event.data.x, y: event.data.y, timestamp: event.timestamp };
+              case 3: // scroll
+                return { type: 'scroll', x: event.data.x, y: event.data.y, timestamp: event.timestamp };
+              case 4: // viewport
+                return { type: 'viewport', width: event.data.width, height: event.data.height, timestamp: event.timestamp };
+              case 5: // input
+                return { type: 'input', tag: event.data.tagName, value: event.data.value, timestamp: event.timestamp };
+              default:
+                return null;
+            }
+          })
+          .filter(Boolean);
+        
+        return {
+          userActions,
+          actionCount: userActions.length,
+          timeWindow
+        };
+      }
     };
   }
 
