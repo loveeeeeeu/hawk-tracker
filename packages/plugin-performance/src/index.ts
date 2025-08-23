@@ -4,7 +4,11 @@ import {
   SEND_TYPES,
   LISTEN_TYPES,
 } from '@hawk-tracker/core';
-import { PerformanceData, PerformanceOptions, ResourceTimingData } from './types';
+import {
+  PerformanceData,
+  PerformanceOptions,
+  ResourceTimingData,
+} from './types';
 
 /**
  * 性能监控插件
@@ -17,13 +21,14 @@ export class PerformancePlugin extends BasePlugin {
 
   constructor(options: PerformanceOptions = {}) {
     super(SEND_TYPES.PERFORMANCE);
-    
+
     // 验证和设置默认选项
     this.options = this.validateAndSetDefaults(options);
-    
+
     // 绑定方法到实例，确保 this 上下文正确
     this.handleLoadEvent = this.handleLoadEvent.bind(this);
-    this.handleDOMContentLoadedEvent = this.handleDOMContentLoadedEvent.bind(this);
+    this.handleDOMContentLoadedEvent =
+      this.handleDOMContentLoadedEvent.bind(this);
   }
 
   /**
@@ -69,10 +74,10 @@ export class PerformancePlugin extends BasePlugin {
     try {
       // 清理所有观察器
       this.cleanupObservers();
-      
+
       // 重置状态
       this.isInstalled = false;
-      
+
       console.log('PerformancePlugin 卸载成功');
     } catch (error) {
       console.error('PerformancePlugin 卸载失败:', error);
@@ -115,7 +120,10 @@ export class PerformancePlugin extends BasePlugin {
   private handleDOMContentLoadedEvent(dataSender: any): void {
     try {
       // 检查文档是否已经准备就绪
-      if (document.readyState === 'interactive' || document.readyState === 'complete') {
+      if (
+        document.readyState === 'interactive' ||
+        document.readyState === 'complete'
+      ) {
         const domData = this.collectDOMPerformanceData();
         dataSender.sendData(SEND_TYPES.PERFORMANCE, domData, false);
         console.log('DOM内容加载性能数据已收集:', domData);
@@ -150,32 +158,46 @@ export class PerformancePlugin extends BasePlugin {
    */
   private collectPerformanceData(): PerformanceData {
     try {
-      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-      
+      const navigation = performance.getEntriesByType(
+        'navigation',
+      )[0] as PerformanceNavigationTiming;
+
       if (!navigation) {
         throw new Error('无法获取导航性能数据');
       }
 
       const paintEntries = performance.getEntriesByType('paint');
-      const firstPaint = paintEntries.find(entry => entry.name === 'first-paint');
-      const firstContentfulPaint = paintEntries.find(entry => entry.name === 'first-contentful-paint');
+      const firstPaint = paintEntries.find(
+        (entry) => entry.name === 'first-paint',
+      );
+      const firstContentfulPaint = paintEntries.find(
+        (entry) => entry.name === 'first-contentful-paint',
+      );
 
       return {
         type: 'navigation',
         timestamp: Date.now(),
         loadTime: navigation.loadEventEnd - navigation.fetchStart,
-        domContentLoaded: navigation.domContentLoadedEventEnd - navigation.fetchStart,
+        domContentLoaded:
+          navigation.domContentLoadedEventEnd - navigation.fetchStart,
         firstPaint: firstPaint ? firstPaint.startTime : 0,
-        firstContentfulPaint: firstContentfulPaint ? firstContentfulPaint.startTime : 0,
+        firstContentfulPaint: firstContentfulPaint
+          ? firstContentfulPaint.startTime
+          : 0,
         dnsTime: navigation.domainLookupEnd - navigation.domainLookupStart,
         tcpTime: navigation.connectEnd - navigation.connectStart,
         requestTime: navigation.responseEnd - navigation.responseStart,
-        domParseTime: navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
-        domReadyTime: navigation.domComplete - navigation.domContentLoadedEventEnd,
+        domParseTime:
+          navigation.domContentLoadedEventEnd -
+          navigation.domContentLoadedEventStart,
+        domReadyTime:
+          navigation.domComplete - navigation.domContentLoadedEventEnd,
         redirectTime: navigation.redirectEnd - navigation.redirectStart,
         unloadTime: navigation.unloadEventEnd - navigation.unloadEventStart,
-        secureConnectionTime: navigation.secureConnectionStart > 0 ? 
-          navigation.connectEnd - navigation.secureConnectionStart : 0,
+        secureConnectionTime:
+          navigation.secureConnectionStart > 0
+            ? navigation.connectEnd - navigation.secureConnectionStart
+            : 0,
       };
     } catch (error) {
       console.error('收集性能数据失败:', error);
@@ -188,8 +210,10 @@ export class PerformancePlugin extends BasePlugin {
    */
   private collectDOMPerformanceData(): PerformanceData {
     try {
-      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-      
+      const navigation = performance.getEntriesByType(
+        'navigation',
+      )[0] as PerformanceNavigationTiming;
+
       if (!navigation) {
         throw new Error('无法获取DOM性能数据');
       }
@@ -197,8 +221,11 @@ export class PerformancePlugin extends BasePlugin {
       return {
         type: 'dom_ready',
         timestamp: Date.now(),
-        domContentLoaded: navigation.domContentLoadedEventEnd - navigation.fetchStart,
-        domParseTime: navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
+        domContentLoaded:
+          navigation.domContentLoadedEventEnd - navigation.fetchStart,
+        domParseTime:
+          navigation.domContentLoadedEventEnd -
+          navigation.domContentLoadedEventStart,
       };
     } catch (error) {
       console.error('收集DOM性能数据失败:', error);
@@ -212,10 +239,10 @@ export class PerformancePlugin extends BasePlugin {
   private setupWebVitalsObserver(dataSender: any): void {
     // LCP 观察器
     this.setupLCPObserver(dataSender);
-    
+
     // FID 观察器
     this.setupFIDObserver(dataSender);
-    
+
     // CLS 观察器
     this.setupCLSObserver(dataSender);
   }
@@ -228,7 +255,7 @@ export class PerformancePlugin extends BasePlugin {
       const lcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
         const lastEntry = entries[entries.length - 1];
-        
+
         if (lastEntry?.startTime !== undefined) {
           const lcpData: PerformanceData = {
             type: 'web_vitals',
@@ -237,11 +264,11 @@ export class PerformancePlugin extends BasePlugin {
             value: lastEntry.startTime,
             element: (lastEntry as any).element?.tagName || 'unknown',
           };
-          
+
           dataSender.sendData(SEND_TYPES.PERFORMANCE, lcpData, false);
         }
       });
-      
+
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
       this.observers.push(lcpObserver);
     } catch (error) {
@@ -257,7 +284,7 @@ export class PerformancePlugin extends BasePlugin {
       const fidObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
         const firstInput = entries[0];
-        
+
         if (firstInput?.startTime !== undefined) {
           const fidData: PerformanceData = {
             type: 'web_vitals',
@@ -266,11 +293,11 @@ export class PerformancePlugin extends BasePlugin {
             value: (firstInput as any).processingStart - firstInput.startTime,
             element: (firstInput as any).target?.tagName || 'unknown',
           };
-          
+
           dataSender.sendData(SEND_TYPES.PERFORMANCE, fidData, false);
         }
       });
-      
+
       fidObserver.observe({ entryTypes: ['first-input'] });
       this.observers.push(fidObserver);
     } catch (error) {
@@ -291,17 +318,17 @@ export class PerformancePlugin extends BasePlugin {
             clsValue += entry.value;
           }
         });
-        
+
         const clsData: PerformanceData = {
           type: 'web_vitals',
           timestamp: Date.now(),
           metric: 'CLS',
           value: clsValue,
         };
-        
+
         dataSender.sendData(SEND_TYPES.PERFORMANCE, clsData, false);
       });
-      
+
       clsObserver.observe({ entryTypes: ['layout-shift'] });
       this.observers.push(clsObserver);
     } catch (error) {
@@ -319,19 +346,23 @@ export class PerformancePlugin extends BasePlugin {
         entries.forEach((entry: PerformanceEntry) => {
           if (this.isResourceTiming(entry)) {
             const resourceData = this.createResourceData(entry);
-            
+
             // 只监控重要的资源类型
             if (this.shouldMonitorResource(entry.initiatorType)) {
-              dataSender.sendData(SEND_TYPES.PERFORMANCE, {
-                type: 'resource',
-                timestamp: Date.now(),
-                ...resourceData,
-              }, false);
+              dataSender.sendData(
+                SEND_TYPES.PERFORMANCE,
+                {
+                  type: 'resource',
+                  timestamp: Date.now(),
+                  ...resourceData,
+                },
+                false,
+              );
             }
           }
         });
       });
-      
+
       resourceObserver.observe({ entryTypes: ['resource'] });
       this.observers.push(resourceObserver);
     } catch (error) {
@@ -342,7 +373,9 @@ export class PerformancePlugin extends BasePlugin {
   /**
    * 创建资源数据
    */
-  private createResourceData(entry: PerformanceResourceTiming): ResourceTimingData {
+  private createResourceData(
+    entry: PerformanceResourceTiming,
+  ): ResourceTimingData {
     return {
       name: entry.name,
       duration: entry.duration,
@@ -370,7 +403,9 @@ export class PerformancePlugin extends BasePlugin {
   /**
    * 类型守卫函数
    */
-  private isResourceTiming(entry: PerformanceEntry): entry is PerformanceResourceTiming {
+  private isResourceTiming(
+    entry: PerformanceEntry,
+  ): entry is PerformanceResourceTiming {
     return entry.entryType === 'resource';
   }
 
@@ -378,7 +413,7 @@ export class PerformancePlugin extends BasePlugin {
    * 清理所有观察器
    */
   private cleanupObservers(): void {
-    this.observers.forEach(observer => {
+    this.observers.forEach((observer) => {
       try {
         observer.disconnect();
       } catch (error) {
@@ -391,7 +426,9 @@ export class PerformancePlugin extends BasePlugin {
   /**
    * 验证和设置默认选项
    */
-  private validateAndSetDefaults(options: PerformanceOptions): PerformanceOptions {
+  private validateAndSetDefaults(
+    options: PerformanceOptions,
+  ): PerformanceOptions {
     const defaults: PerformanceOptions = {
       enableWebVitals: true,
       enableResourceTiming: true,
@@ -458,7 +495,9 @@ export class PerformancePlugin extends BasePlugin {
     try {
       const resources = performance.getEntriesByType('resource');
       return resources
-        .filter((entry): entry is PerformanceResourceTiming => this.isResourceTiming(entry))
+        .filter((entry): entry is PerformanceResourceTiming =>
+          this.isResourceTiming(entry),
+        )
         .map((entry) => this.createResourceData(entry));
     } catch (error) {
       console.error('获取资源性能数据失败:', error);
@@ -474,11 +513,14 @@ export class PerformancePlugin extends BasePlugin {
       const resources = this.getResourceTimingData();
       const summary = {
         totalResources: resources.length,
-        totalBytes: resources.reduce((sum, resource) => sum + (resource.transferSize || 0), 0),
-        byType: {} as Record<string, { count: number; bytes: number }>
+        totalBytes: resources.reduce(
+          (sum, resource) => sum + (resource.transferSize || 0),
+          0,
+        ),
+        byType: {} as Record<string, { count: number; bytes: number }>,
       };
-      
-      resources.forEach(resource => {
+
+      resources.forEach((resource) => {
         const type = resource.initiatorType;
         if (!summary.byType[type]) {
           summary.byType[type] = { count: 0, bytes: 0 };
@@ -486,7 +528,7 @@ export class PerformancePlugin extends BasePlugin {
         summary.byType[type].count++;
         summary.byType[type].bytes += resource.transferSize || 0;
       });
-      
+
       return summary;
     } catch (error) {
       console.error('获取资源摘要失败:', error);

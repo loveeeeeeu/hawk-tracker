@@ -42,7 +42,9 @@ window.hawkTracker = hawkTracker;
 
 // 添加性能监控相关的全局函数
 window.getPerformanceData = () => {
-  const performancePlugin = hawkTracker.plugins.find(p => p.constructor.name === 'PerformancePlugin');
+  const performancePlugin = hawkTracker.plugins.find(
+    (p) => p.constructor.name === 'PerformancePlugin',
+  );
   if (performancePlugin) {
     return performancePlugin.collectManualPerformanceData();
   }
@@ -50,7 +52,9 @@ window.getPerformanceData = () => {
 };
 
 window.getResourceTimingData = () => {
-  const performancePlugin = hawkTracker.plugins.find(p => p.constructor.name === 'PerformancePlugin');
+  const performancePlugin = hawkTracker.plugins.find(
+    (p) => p.constructor.name === 'PerformancePlugin',
+  );
   if (performancePlugin) {
     return performancePlugin.getResourceTimingData();
   }
@@ -59,20 +63,25 @@ window.getResourceTimingData = () => {
 
 // 新增：获取资源汇总统计的全局函数
 window.getResourceSummary = () => {
-  const performancePlugin = hawkTracker.plugins.find(p => p.constructor.name === 'PerformancePlugin');
+  const performancePlugin = hawkTracker.plugins.find(
+    (p) => p.constructor.name === 'PerformancePlugin',
+  );
   if (performancePlugin && performancePlugin.getResourceSummary) {
     return performancePlugin.getResourceSummary();
   }
-  
+
   // 如果插件中没有getResourceSummary方法，则手动计算
   const resources = performance.getEntriesByType('resource');
   const summary = {
     totalResources: resources.length,
-    totalBytes: resources.reduce((sum, resource) => sum + (resource.transferSize || 0), 0),
-    byType: {}
+    totalBytes: resources.reduce(
+      (sum, resource) => sum + (resource.transferSize || 0),
+      0,
+    ),
+    byType: {},
   };
-  
-  resources.forEach(resource => {
+
+  resources.forEach((resource) => {
     const type = resource.initiatorType;
     if (!summary.byType[type]) {
       summary.byType[type] = { count: 0, bytes: 0 };
@@ -80,7 +89,7 @@ window.getResourceSummary = () => {
     summary.byType[type].count++;
     summary.byType[type].bytes += resource.transferSize || 0;
   });
-  
+
   return summary;
 };
 
