@@ -39,8 +39,8 @@ export default function ProjectSettingsPage() {
         // 这里应该调用实际的API
         const mockProject: ProjectSettings = {
           id: projectId || '',
-          name: '示例项目',
-          description: '这是一个示例项目的描述',
+          name: 'Hawk Tracker 项目',
+          description: '这是一个用于错误监控和性能追踪的项目，帮助开发者快速定位和解决问题。',
           createdAt: '2024-01-01T00:00:00Z',
           updatedAt: '2024-01-01T00:00:00Z'
         };
@@ -48,20 +48,20 @@ export default function ProjectSettingsPage() {
         const mockMembers: ProjectMember[] = [
           {
             id: '1',
-            name: '小白',
-            email: 'xiaobai@hawk-tracker.com',
+            name: '张三',
+            email: 'zhangsan@hawk-tracker.com',
             role: 'owner'
           },
           {
             id: '2',
-            name: '大白',
-            email: 'dabai@hawk-tracker.com',
+            name: '李四',
+            email: 'lisi@hawk-tracker.com',
             role: 'admin'
           },
           {
             id: '3',
-            name: '小小白',
-            email: 'xiaoxiaobai@hawk-tracker.com',
+            name: '王五',
+            email: 'wangwu@hawk-tracker.com',
             role: 'member'
           }
         ];
@@ -128,6 +128,19 @@ export default function ProjectSettingsPage() {
     }
   };
 
+  const handleInviteMember = () => {
+    const email = prompt('请输入要邀请的成员邮箱:');
+    if (email && email.trim()) {
+      const newMember: ProjectMember = {
+        id: Date.now().toString(),
+        name: email.split('@')[0] || '新成员',
+        email: email.trim(),
+        role: 'member'
+      };
+      setMembers(prev => [...prev, newMember]);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -147,6 +160,41 @@ export default function ProjectSettingsPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        {/* 面包屑导航 */}
+        <nav className="flex mb-6" aria-label="Breadcrumb">
+          <ol className="inline-flex items-center space-x-1 md:space-x-3">
+            <li className="inline-flex items-center">
+              <button
+                onClick={() => navigate('/')}
+                className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600"
+              >
+                应用首页
+              </button>
+            </li>
+            <li>
+              <div className="flex items-center">
+                <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path>
+                </svg>
+                <button
+                  onClick={() => navigate('/projects')}
+                  className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2"
+                >
+                  项目管理
+                </button>
+              </div>
+            </li>
+            <li>
+              <div className="flex items-center">
+                <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path>
+                </svg>
+                <span className="ml-1 text-sm font-medium text-gray-500 md:ml-2">项目设置</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+
         {/* 页面标题 */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -158,12 +206,14 @@ export default function ProjectSettingsPage() {
                 管理项目配置和成员权限
               </p>
             </div>
-            <Button
-              onClick={() => navigate(`/projects/${projectId}`)}
-              variant="outline"
-            >
-              返回项目
-            </Button>
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={() => navigate('/projects')}
+                variant="outline"
+              >
+                返回项目管理
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -222,7 +272,10 @@ export default function ProjectSettingsPage() {
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 成员管理
               </h2>
-              <Button variant="outline">
+              <Button 
+                variant="outline"
+                onClick={handleInviteMember}
+              >
                 邀请成员
               </Button>
             </div>
