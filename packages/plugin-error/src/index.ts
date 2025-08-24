@@ -328,13 +328,34 @@ export class ErrorPlugin extends BasePlugin {
         }) || undefined;
     } catch {}
 
-    // rrweb 快照（如果存在 rrweb 插件导出的全局能力）
+    // 改进：主动关联录屏和错误
     let rrwebSnapshot: any | undefined;
+    let errorContext: any = undefined;
+    
     if (this.options.attachRrweb) {
       try {
         const api = (window as any)?.$hawkRrweb;
         if (api && typeof api.getReplay === 'function') {
+          // 获取最近的录屏事件
           rrwebSnapshot = api.getReplay({ maxSize: this.options.rrwebMaxSize });
+          
+          // 新增：获取错误发生时的上下文信息
+          if (api.getErrorContext) {
+            errorContext = api.getErrorContext({
+              errorType: base.name,
+              errorMessage: base.message,
+              timestamp: Date.now()
+            });
+          }
+          
+          // 新增：标记错误发生的时间点
+          if (api.markErrorPoint) {
+            api.markErrorPoint({
+              type: 'error',
+              error: base,
+              timestamp: Date.now()
+            });
+          }
         }
       } catch {}
     }
@@ -344,6 +365,7 @@ export class ErrorPlugin extends BasePlugin {
       userAgent,
       behaviorSnapshot,
       rrwebSnapshot,
+      errorContext, // 新增：错误上下文
       release: {
         appId: this.options.appId,
         version: this.options.version,
