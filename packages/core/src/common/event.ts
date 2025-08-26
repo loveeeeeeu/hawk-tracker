@@ -23,6 +23,7 @@ export enum SEND_TYPES {
   PERFORMANCE = 'performance',
   BEHAVIOR = 'behavior',
   CUSTOM = 'custom',
+  RRWEB = 'rrweb',
 }
 
 // 精确地描述具体的事件对象类型
@@ -36,6 +37,7 @@ export enum SEND_SUB_TYPES {
   RESOURCE = 'resource',
   REACT = 'react',
   VUE = 'vue',
+  RRWEB = 'rrweb',
   // WHITE_SCREEN = 'whiteScreen',
   // JS = 'js',
   // CORS = 'cors',
