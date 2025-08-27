@@ -8,7 +8,10 @@ export class EventCenter {
   private eventQueue: EventHandler[] = []; // 事件队列
 
   subscribeEvent(handler: EventHandler) {
-    console.log('subscribeEvent xxxxx', { handler });
+    // 只在开发环境下输出调试信息
+    if (process.env.NODE_ENV === 'development') {
+      console.log('subscribeEvent xxxxx', { handler });
+    }
     const handlers = this.eventMap.get(handler.type) || [];
     handlers.push(handler);
     this.eventMap.set(handler.type, handlers);

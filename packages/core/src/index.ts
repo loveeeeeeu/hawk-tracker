@@ -27,7 +27,13 @@ export class HawkTracker {
       dsn: configs.dsn,
       sampleRate: configs.sampleRate,
       debug: configs.debug,
-      // ... 其他 DataSender 需要的配置
+      batchSize: configs.batchSize ?? 50,
+      sendInterval: configs.sendInterval ?? 5000,
+      maxRetry: configs.maxRetry ?? 5,
+      backoffBaseMs: configs.backoffBaseMs ?? 1000,
+      backoffMaxMs: configs.backoffMaxMs ?? 30000,
+      maxConcurrentRequests: configs.maxConcurrentRequests ?? 3,
+      offlineStorageKey: configs.offlineStorageKey ?? 'sdk_report_queue',
     });
     this.eventCenter = eventCenter;
 
@@ -50,7 +56,9 @@ export class HawkTracker {
   }
 
   public track(type: string, data: any, isImmediate: boolean = true) {
-    this.dataSender.sendData(type, data, isImmediate);
+    // 从data中提取subType，如果没有则使用默认值
+    const subType = (data && data.type) || 'custom';
+    this.dataSender.sendData(type, subType, data, isImmediate);
   }
 
   /**
@@ -83,16 +91,24 @@ export class HawkTracker {
   }
 
   // 便捷方法：对外暴露“像数组一样”的默认行为栈操作
-  public pushBehavior(event: { type: string; context?: Record<string, any>; pageUrl?: string }, stackName: string = 'user_behavior'): boolean {
+  public pushBehavior(
+    event: { type: string; context?: Record<string, any>; pageUrl?: string },
+    stackName: string = 'user_behavior',
+  ): boolean {
     const stack = this.getOrCreateBehaviorStack(stackName);
     return stack.addEvent({
       type: event.type,
-      pageUrl: event.pageUrl || (typeof window !== 'undefined' ? window.location.href : ''),
+      pageUrl:
+        event.pageUrl ||
+        (typeof window !== 'undefined' ? window.location.href : ''),
       context: event.context || {},
     });
   }
 
-  public getBehaviors(options: SnapshotOptions = {}, stackName: string = 'user_behavior') {
+  public getBehaviors(
+    options: SnapshotOptions = {},
+    stackName: string = 'user_behavior',
+  ) {
     const stack = this.getOrCreateBehaviorStack(stackName);
     return stack.getSnapshot(options);
   }

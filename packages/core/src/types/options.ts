@@ -1,5 +1,6 @@
 import { AnyObj, AnyFun, VoidFun } from './common';
 import { LISTEN_TYPES } from '../common/event';
+
 // 功能配置接口
 interface Pv {
   core?: boolean; // 是否发送页面跳转相关数据
@@ -25,6 +26,7 @@ interface Behavior {
   maxSize?: number; // 默认行为栈最大事件数量
   maxAge?: number; // 默认行为栈最大事件年龄（毫秒）
   debug?: boolean; // 是否开启行为栈调试模式
+
   // 点击事件控制配置
   click?: {
     enabled?: boolean; // 是否启用点击事件监控
@@ -37,6 +39,7 @@ interface Behavior {
     beforeSend?: (event: ClickEvent) => ClickEvent | null; // 发送前钩子
     afterSend?: (success: boolean, data: any) => void; // 发送后钩子
   };
+
   // 监听器控制配置
   listeners?: {
     enabled?: LISTEN_TYPES[]; // 启用的监听器类型列表
@@ -56,16 +59,46 @@ export interface InternalConfig {
   sampleRate?: number; // 采样率
   debug?: boolean; // 是否开启调试模式(控制台会输出sdk动作)
   behavior?: Behavior; // 行为栈配置
-  // 点击事件相关配置
+
+  // DataSender相关配置（已实现）
+  batchSize?: number; // 批量上报大小
+  sendInterval?: number; // 上报间隔（毫秒）
+  maxRetry?: number; // 最大重试次数
+  backoffBaseMs?: number; // 退避基础时间（毫秒）
+  backoffMaxMs?: number; // 退避最大时间（毫秒）
+  maxConcurrentRequests?: number; // 最大并发请求数
+  offlineStorageKey?: string; // 离线存储键名
+
+  // 其他功能配置（预留/已有）
+  pv?: Pv | boolean;
+  performance?: Performance | boolean;
+  error?: Error | boolean;
+  event?: Event | boolean;
+  ext?: AnyObj; // 自定义全局附加参数(放在baseInfo中)
+  tracesSampleRate?: number; // 抽样发送
+
+  // 注意：同时保留两个字段以兼容历史
   cacheMaxLength?: number; // 上报数据最大缓存数
-  cacheWaitingTime?: number; // 上报数据最大等待时间
+  cacheWaitingTime?: number; // 上报数据最大等待时间（推荐字段）
+
   ignoreErrors?: Array<string | RegExp>; // 错误类型事件过滤
   ignoreRequest?: Array<string | RegExp>; // 请求类型事件过滤
+  scopeError?: boolean; // 当某个时间段报错时，会将此类错误转为特殊错误类型
+  localization?: boolean; // 是否本地化：sdk不再主动发送事件，事件都存储在本地
+  sendTypeByXmlBody?: boolean; // 是否强制指定发送形式为xml，body请求方式
+  recordScreen?: boolean; // 是否启动录屏
+
+  beforePushEventList?: (data: any) => any; // 添加到行为列表前的 hook
   beforeSendData?: (data: any) => any; // 数据上报前的 hook
   afterSendData?: (data: any) => void; // 数据上报后的 hook
+
   timeout?: number; // 日志上报超时时间（毫秒）
   maxQueueLength?: number; // 上报接口异常，日志队列最大缓存数
   checkRecoverInterval?: number; // 多长时间检测一次上报接口是否恢复（分钟）
+
+  // 兼容旧版本
+  apikey?: string;
+  disable?: boolean;
 }
 
 // 点击事件数据结构
