@@ -122,9 +122,22 @@ export class RrwebPlugin extends BasePlugin {
 
     // 全局调试 API（旧，向后兼容给错误插件使用）
     ;(window as any).$hawkRrweb = {
-      getReplay: ({ maxSize = this.options.maxEvents } = {}) => {
+      getReplay: ({ maxSize = this.options.maxEvents, maxBytes }: { maxSize?: number; maxBytes?: number } = {}) => {
         const size = Math.min(maxSize, this.events.length);
-        return this.events.slice(this.events.length - size);
+        let slice = this.events.slice(this.events.length - size);
+        if (typeof maxBytes === 'number' && maxBytes > 0) {
+          // 粗略基于 JSON 字节长度的裁剪（UTF-8 近似）
+          let json = '';
+          while (slice.length > 0) {
+            json = JSON.stringify(slice);
+            const bytes = new TextEncoder().encode(json).length;
+            if (bytes <= maxBytes) break;
+            // 移除最早的 10% 或至少 1 条，优先保留最近事件
+            const drop = Math.max(1, Math.floor(slice.length * 0.1));
+            slice = slice.slice(drop);
+          }
+        }
+        return slice;
       },
       getErrorContext: (_: any) => {
         // 简化的错误上下文：取错误点附近的片段
