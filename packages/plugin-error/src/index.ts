@@ -51,9 +51,17 @@ export class ErrorPlugin extends BasePlugin {
     appId?: string;
     version?: string;
     dedupeWindowMs?: number; // 新增：短窗去重时间窗口
+    rrwebMaxBytes?: number; // 新增：录屏最大字节限制（近似）
+    maxConsecutiveFailures?: number; // 断路器阈值
+    circuitOpenMs?: number; // 断路器打开时长
   };
   // 新增：短窗去重存储
   private recentFingerprints: Map<string, number> = new Map();
+  // 新增：自我上报屏蔽（避免SDK-自身-报错-循环）
+  private isSelfReporting = false;
+  // 新增：断路器状态
+  private consecutiveFailures = 0;
+  private circuitOpenUntil = 0;
 
   constructor(options: Partial<ErrorPlugin['options']> = {}) {
     super(SEND_TYPES.ERROR);
@@ -62,15 +70,41 @@ export class ErrorPlugin extends BasePlugin {
       behaviorSnapshotCount: 50,
       attachRrweb: true,
       rrwebMaxSize: 200, // 限制录屏事件数量，避免体积过大
+      rrwebMaxBytes: 64 * 1024, // 64KB 近似上限
       appId: undefined,
       version: undefined,
       dedupeWindowMs: 3000,
+      maxConsecutiveFailures: 3,
+      circuitOpenMs: 5000,
       ...options,
     };
   }
 
   install(core: any, _options?: any) {
     const { eventCenter, dataSender } = core;
+
+    const trySend = async (
+      subType: SEND_SUB_TYPES | string,
+      payload: NormalizedErrorData,
+      immediate: boolean,
+    ) => {
+      if (!this.shouldSend(subType, payload)) return;
+      if (this.isSelfReporting) return; // 自身上报中，直接丢弃，避免循环
+      if (Date.now() < this.circuitOpenUntil) return; // 断路器打开中，丢弃
+      try {
+        this.isSelfReporting = true;
+        dataSender.sendData(SEND_TYPES.ERROR, subType, payload, immediate);
+        this.consecutiveFailures = 0; // 视为投递请求已入队成功
+      } catch (_) {
+        this.consecutiveFailures++;
+        if (this.consecutiveFailures >= (this.options.maxConsecutiveFailures || 3)) {
+          this.circuitOpenUntil = Date.now() + (this.options.circuitOpenMs || 5000);
+          this.consecutiveFailures = 0;
+        }
+      } finally {
+        this.isSelfReporting = false;
+      }
+    };
 
     // window.onerror 捕获：代码错误 + 资源加载错误
     eventCenter.subscribeEvent({
@@ -81,8 +115,7 @@ export class ErrorPlugin extends BasePlugin {
         const subType = payload.resource
           ? SEND_SUB_TYPES.RESOURCE
           : SEND_SUB_TYPES.ERROR;
-        if (!this.shouldSend(subType, payload)) return; // 去重拦截
-        dataSender.sendData(SEND_TYPES.ERROR, subType, payload, true);
+        trySend(subType, payload, true);
       },
     });
 
@@ -92,17 +125,11 @@ export class ErrorPlugin extends BasePlugin {
       callback: (event: PromiseRejectionEvent) => {
         const payload = this.handleUnhandledRejection(event, core);
         const subType = SEND_SUB_TYPES.UNHANDLEDREJECTION;
-        if (!this.shouldSend(subType, payload)) return; // 去重拦截
-        dataSender.sendData(
-          SEND_TYPES.ERROR,
-          subType,
-          payload,
-          true,
-        );
+        trySend(subType, payload, true);
       },
     });
 
-    // console.error 捕获（可辅助定位开发期错误）
+    // console.error 捕获
     eventCenter.subscribeEvent({
       type: LISTEN_TYPES.CONSOLEERROR,
       callback: (args: any[]) => {
@@ -115,13 +142,7 @@ export class ErrorPlugin extends BasePlugin {
             name: 'ConsoleError',
           });
           const subType = SEND_SUB_TYPES.CONSOLEERROR;
-          if (!this.shouldSend(subType, payload)) return; // 去重拦截
-          dataSender.sendData(
-            SEND_TYPES.ERROR,
-            subType,
-            payload,
-            false,
-          );
+          trySend(subType, payload, false);
         } catch {}
       },
     });
@@ -133,13 +154,7 @@ export class ErrorPlugin extends BasePlugin {
         const payload = this.handleFetch(info, core);
         if (!payload) return;
         const subType = SEND_SUB_TYPES.FETCH;
-        if (!this.shouldSend(subType, payload)) return; // 去重拦截
-        dataSender.sendData(
-          SEND_TYPES.ERROR,
-          subType,
-          payload,
-          true,
-        );
+        trySend(subType, payload, true);
       },
     });
 
@@ -192,13 +207,7 @@ export class ErrorPlugin extends BasePlugin {
               name: 'XMLHttpRequestError',
             });
             const subType = SEND_SUB_TYPES.XHR;
-            if (!this.shouldSend(subType, payload)) return; // 去重拦截
-            core.dataSender.sendData(
-              SEND_TYPES.ERROR,
-              subType,
-              payload,
-              true,
-            );
+            trySend(subType, payload, true);
           };
 
           xhr.addEventListener('loadend', () => finalize('loadend'));
@@ -426,8 +435,12 @@ export class ErrorPlugin extends BasePlugin {
       try {
         const api = (window as any)?.$hawkRrweb;
         if (api && typeof api.getReplay === 'function') {
-          // 获取最近的录屏事件
-          rrwebSnapshot = api.getReplay({ maxSize: this.options.rrwebMaxSize });
+          const bytesLimit = this.options.rrwebMaxBytes || 64 * 1024;
+          // 获取最近的录屏事件，带字节上限
+          rrwebSnapshot = api.getReplay({
+            maxSize: this.options.rrwebMaxSize,
+            maxBytes: bytesLimit,
+          });
 
           // 新增：获取错误发生时的上下文信息
           if (api.getErrorContext) {
