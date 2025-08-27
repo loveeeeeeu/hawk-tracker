@@ -1,17 +1,18 @@
 import pako from 'pako';
 import { _global } from '../utils';
 import { log } from '../utils/debug';
+import { $sdkInstance } from '../utils/global';
+import { generateUUID } from '../utils/common';
 
 // 定义上报数据的类型
 type ReportData = {
   // 数据类型，如 'error', 'performance', 'behavior'
   type: string;
+  subType: string;
   // 实际数据
   data: any;
   // 时间戳
   timestamp: number;
-  // 基础信息，如页面 URL、会话 ID 等
-  baseInfo: Record<string, any>;
   // 是否需要立即上报，用于高优先级数据
   isImmediate: boolean;
   // 当前重试次数
@@ -27,6 +28,10 @@ interface SenderConfig {
   maxConcurrentRequests?: number;
   offlineStorageKey?: string;
   debug?: boolean;
+  // 新增：重试相关配置
+  maxRetry?: number;
+  backoffBaseMs?: number;
+  backoffMaxMs?: number;
 }
 
 export class DataSender {
@@ -44,6 +49,8 @@ export class DataSender {
     message: string,
     ...args: any[]
   ) => void;
+  // 新增：重试定时器
+  private retryTimer: number | null = null;
 
   constructor(config: SenderConfig) {
     // 设置默认配置并合并
@@ -55,7 +62,11 @@ export class DataSender {
       maxConcurrentRequests: config.maxConcurrentRequests ?? 3,
       offlineStorageKey: config.offlineStorageKey ?? 'sdk_report_queue',
       debug: config.debug ?? false,
-    };
+      // ... existing code ...
+      maxRetry: config.maxRetry ?? 5,
+      backoffBaseMs: config.backoffBaseMs ?? 1000,
+      backoffMaxMs: config.backoffMaxMs ?? 30000,
+    } as Required<SenderConfig>;
 
     if (this.config.debug) {
       this.log = log;
@@ -74,9 +85,23 @@ export class DataSender {
   }
 
   // 对外暴露的唯一接口
-  public sendData(type: string, data: any, isImmediate: boolean = false): void {
-    // 采样过滤
-    if (Math.random() > this.config.sampleRate) {
+  /*
+   * 参数：
+   * type: 数据类型
+   * data: 数据
+   * isImmediate: 是否立即上报
+   * 返回值：
+   * 无返回值
+   * 说明： 将数据入队，如果isImmediate为true，则立即触发上报
+   */
+  public sendData(
+    type: string,
+    subType: string,
+    data: any,
+    isImmediate: boolean = false,
+  ): void {
+    // 立即事件跳过采样过滤
+    if (!isImmediate && Math.random() > this.config.sampleRate) {
       this.log('info', `Data dropped due to sampling:`, data);
       return;
     }
@@ -84,20 +109,21 @@ export class DataSender {
     // 封装基础信息
     const reportData: ReportData = {
       type,
-      data,
+      subType,
+      ...data,
       timestamp: Date.now(),
-      baseInfo: this.getBaseInfo(),
-      isImmediate,
       retryCount: 0,
-    };
+      eventId: generateUUID(),
+    } as any;
 
-    // 将数据入队
-    this.queue.push(reportData);
-    this.log('info', `Added data to queue:`, reportData);
-
-    // 立即触发上报
+    // 立即事件插入队列头部，普通事件追加到尾部
     if (isImmediate) {
+      this.queue.unshift(reportData);
+      this.log('info', `Added immediate data to queue head:`, reportData);
       this.flush();
+    } else {
+      this.queue.push(reportData);
+      this.log('info', `Added data to queue:`, reportData);
     }
   }
 
@@ -106,10 +132,22 @@ export class DataSender {
     if (this.timer !== null) return;
 
     const tick = () => {
+      // 智能调度：如果队列为空或并发数已达上限，跳过本次执行
+      if (
+        this.queue.length === 0 ||
+        this.concurrentRequests >= this.config.maxConcurrentRequests
+      ) {
+        this.log(
+          'info',
+          `Skipping flush: queue=${this.queue.length}, concurrent=${this.concurrentRequests}`,
+        );
+        return;
+      }
+
       // 在浏览器空闲时触发上报，最大化性能
       // requestIdleCallback 仅在浏览器有空闲时间时才会执行
       if ('requestIdleCallback' in window) {
-        window.requestIdleCallback(() => this.flush());
+        (window as any).requestIdleCallback(() => this.flush());
       } else {
         // 如果不支持，则直接执行
         this.flush();
@@ -137,7 +175,10 @@ export class DataSender {
 
     // 从队列头部取出一定数量的数据
     const dataToSend = this.queue.splice(0, this.config.batchSize);
-
+    const finalData = {
+      dataQueue: dataToSend,
+      baseInfo: { ...this.getBaseInfo(), sendTime: Date.now() },
+    };
     this.concurrentRequests++;
     this.log(
       'info',
@@ -145,25 +186,82 @@ export class DataSender {
     );
 
     try {
-      await this.transport(dataToSend);
+      await this.transport(finalData);
       this.log('info', `Successfully sent ${dataToSend.length} items.`);
+      // 成功：如果还有数据，继续快速冲队列
+      if (this.queue.length > 0) {
+        this.flush();
+      }
     } catch (error) {
       // 失败时，将数据放回队列，并增加重试次数
       this.log('error', `Failed to send data, error:`, error);
-      dataToSend.forEach((item) => item.retryCount++);
-      this.queue.unshift(...dataToSend); // 将数据重新放回队列头部
+      dataToSend.forEach(
+        (item) => (item.retryCount = (item.retryCount || 0) + 1),
+      );
+
+      // 根据最大重试次数拆分：继续重试 vs 归档离线
+      const toRetry: ReportData[] = [];
+      const toArchive: ReportData[] = [];
+      for (const item of dataToSend) {
+        if ((item.retryCount || 0) < this.config.maxRetry) {
+          toRetry.push(item);
+        } else {
+          toArchive.push(item);
+        }
+      }
+
+      if (toArchive.length > 0) {
+        this.saveToOfflineStorage(toArchive);
+        this.log(
+          'warn',
+          `Archived ${toArchive.length} items after exceeding maxRetry=${this.config.maxRetry}.`,
+        );
+      }
+
+      if (toRetry.length > 0) {
+        this.queue.unshift(...toRetry);
+      }
+
+      // 离线则等待 online 事件再触发
+      if (!navigator.onLine) {
+        this.log('warn', 'Network offline, waiting for online event to retry.');
+      } else if (toRetry.length > 0 || this.queue.length > 0) {
+        // 在线失败：按照指数退避重试
+        const maxRetryCount =
+          toRetry.length > 0
+            ? Math.max(...toRetry.map((i) => i.retryCount || 1))
+            : 1;
+        const base = this.config.backoffBaseMs;
+        const cap = this.config.backoffMaxMs;
+        const delay = Math.min(
+          base * Math.pow(2, Math.max(0, maxRetryCount - 1)),
+          cap,
+        );
+        const jitter = Math.floor(Math.random() * Math.floor(delay * 0.2));
+        this.scheduleRetry(delay + jitter);
+      }
     } finally {
       this.concurrentRequests--;
     }
 
-    // 如果队列中还有数据，立即再次尝试上报
-    if (this.queue.length > 0) {
+    // 成功与失败的后续行为已分别处理，这里不再立即递归 flush，避免无限重试
+  }
+
+  // 新增：带退避的重试调度
+  private scheduleRetry(delayMs: number): void {
+    if (this.retryTimer !== null) return;
+    this.log('warn', `Scheduling retry in ${delayMs} ms`);
+    this.retryTimer = window.setTimeout(() => {
+      this.retryTimer = null;
       this.flush();
-    }
+    }, delayMs);
   }
 
   // 传输通道，选择最合适的传输方式
-  private async transport(data: ReportData[]): Promise<void> {
+  private async transport(data: {
+    dataQueue: ReportData[];
+    baseInfo: Record<string, any>;
+  }): Promise<void> {
     const payload = JSON.stringify(data);
 
     // 使用 pako 进行 gzip 压缩
@@ -180,17 +278,27 @@ export class DataSender {
         'warn',
         `Payload size exceeds sendBeacon limit, falling back to fetch.`,
       );
-      await fetch(this.config.dsn, {
+      const response = await fetch(this.config.dsn, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Content-Encoding': 'gzip',
         },
-        body: compressedPayload,
+        body: compressedPayload as any,
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
     } else {
       // 优先使用 sendBeacon
-      navigator.sendBeacon(this.config.dsn, compressedPayload);
+      const success = (navigator as any).sendBeacon(
+        this.config.dsn,
+        compressedPayload as any,
+      );
+      if (!success) {
+        throw new Error('sendBeacon failed');
+      }
     }
   }
 
@@ -211,11 +319,26 @@ export class DataSender {
     }
   }
 
+  // 新增：保存超出最大重试次数的数据到离线存储
+  private saveToOfflineStorage(items: ReportData[]): void {
+    try {
+      const key = this.config.offlineStorageKey;
+      const existing = localStorage.getItem(key);
+      const arr: ReportData[] = existing ? JSON.parse(existing) : [];
+      arr.push(...items);
+      localStorage.setItem(key, JSON.stringify(arr));
+    } catch (e) {
+      this.log('error', 'Failed to save items to offline storage:', e);
+    }
+  }
+
   // 事件监听器，处理网络状态和页面卸载
   private setupEventListeners(): void {
     // 监听网络恢复
     window.addEventListener('online', () => {
       this.log('info', 'Network online, flushing pending data.');
+      // 恢复离线存储的数据再冲队列
+      this.restoreFromLocalStorage();
       this.flush(); // 立即上报积压的数据
       this.startScheduler(); // 重新启动定时器
     });
@@ -247,9 +370,10 @@ export class DataSender {
 
   // 辅助方法，获取基础信息
   private getBaseInfo(): Record<string, any> {
+    const { baseInfo = {} } = $sdkInstance || {};
     return {
-      pageUrl: _global.location.href,
-      userAgent: navigator.userAgent,
+      ...baseInfo,
+      timestamp: Date.now(),
       // IP 和会话 ID 等通常在后端通过请求头获取，前端无法直接获取
       // 这里可以放置会话 ID 或其他客户端信息
     };

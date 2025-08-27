@@ -19,7 +19,48 @@ interface Error {
 interface Event {
   core?: boolean; // 是否采集点击事件
 }
+interface Event {
+  core?: boolean; // 是否采集点击事件
+}
 
+/**
+ * SDK初始化入参配置
+ */
+export interface InternalConfig {
+  dsn: string; // 上报地址
+  appName: string; // 应用名称
+  appCode?: string; // 应用code
+  appVersion?: string; // 应用版本
+  userUuid?: string; // 用户id(外部填充进来的id)
+  sampleRate?: number; // 采样率
+  debug?: boolean; // 是否开启调试模式(控制台会输出sdk动作)
+  behavior?: Behavior; // 行为栈配置
+}
+
+interface Event {
+  core?: boolean; // 是否采集点击事件
+}
+
+interface Behavior {
+  core?: boolean; // 是否启用行为栈管理
+  maxSize?: number; // 默认行为栈最大事件数量
+  maxAge?: number; // 默认行为栈最大事件年龄（毫秒）
+  debug?: boolean; // 是否开启行为栈调试模式
+}
+
+/**
+ * SDK初始化入参配置
+ */
+export interface InternalConfig {
+  dsn: string; // 上报地址
+  appName: string; // 应用名称
+  appCode?: string; // 应用code
+  appVersion?: string; // 应用版本
+  userUuid?: string; // 用户id(外部填充进来的id)
+  sampleRate?: number; // 采样率
+  debug?: boolean; // 是否开启调试模式(控制台会输出sdk动作)
+  behavior?: Behavior; // 行为栈配置
+}
 /**
  * SDK初始化入参配置
  */

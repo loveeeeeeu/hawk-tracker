@@ -1,4 +1,4 @@
-// 该文件作用：测试core和plugin-error的打包是否正常
+// 该文件作用：测试core和plugin-error、plugin-behavior的打包与核心机制展示
 
 import { init } from '../../packages/core/dist/index.mjs';
 import { ErrorPlugin } from '../../packages/plugin-error/dist/index.mjs';
@@ -8,14 +8,20 @@ console.log('Initializing Hawk Tracker...');
 
 const hawkTracker = init({
   dsn: 'https://your-dsn.com',
-  appName: 'your-app-name',
-  appCode: 'your-app-code',
+  appName: 'demo-app',
+  appCode: 'demo-code',
+  appVersion: '1.0.0',
   sampleRate: 1,
   debug: true,
   batchSize: 15,
   sendInterval: 5000,
   maxConcurrentRequests: 3,
   offlineStorageKey: 'sdk_report_queue',
+  behavior: { 
+    core: true, 
+    maxSize: 300, 
+    debug: true 
+  },
 });
 
 console.log('Using ErrorPlugin...');

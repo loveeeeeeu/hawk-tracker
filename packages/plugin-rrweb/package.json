@@ -1,0 +1,36 @@
+{
+  "name": "@hawk-tracker/plugin-rrweb",
+  "version": "0.0.0",
+  "private": false,
+  "type": "module",
+  "description": "rrweb recording plugin for the web SDK",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@hawk-tracker/core": "workspace:*",
+    "rrweb": "^2.0.0-alpha.13"
+  },
+  "devDependencies": {
+    "@workspace/build-config": "workspace:*",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "rollup": "^4.46.2",
+    "rimraf": "^6.0.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
