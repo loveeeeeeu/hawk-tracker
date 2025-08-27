@@ -1,120 +1,61 @@
-# @hawk-tracker/plugin-rrweb 使用教程
+# Rrweb Plugin - 录屏插件
 
-本插件基于 rrweb，实现前端页面“事件级回放”。默认只在“错误发生时”取最近一段事件，带宽友好，便于复现场景与定位问题。
+本插件为 SDK 提供 rrweb 录屏能力，默认仅在前端内存中维护环形缓冲区，不做自动上报（由上层错误插件或业务逻辑决定何时取用）。
 
-## 0. 前置条件
-- 已在页面中初始化 `@hawk-tracker/core`
-- Node 包已安装（pnpm/yarn/npm 任一均可）
-
+## 安装
 ```bash
 pnpm add @hawk-tracker/plugin-rrweb
 ```
 
-## 1. 快速开始（两步）
-1) 先启用录屏插件（建议放在错误插件之前）：
+## 快速开始
 ```ts
 import { init } from '@hawk-tracker/core';
 import { RrwebPlugin } from '@hawk-tracker/plugin-rrweb';
-import { ErrorPlugin } from '@hawk-tracker/plugin-error';
 
-const tracker = init({ dsn: 'https://your-endpoint', debug: false });
+const core = init({ dsn: '/api/track', debug: true });
 
-// 步骤1：先启动录屏
-tracker.use(RrwebPlugin, {
-  // 不写 preset 默认 'balanced'
-  // 也可选 'privacy' | 'quality'
-  preset: 'balanced'
-});
-
-// 步骤2：再启动错误监控（会自动附带 rrweb 片段）
-tracker.use(ErrorPlugin, {
-  attachRrweb: true,
-  rrwebMaxSize: 200 // 错误发生时抓取最近 200 条事件
+core.use(RrwebPlugin, {
+  preset: 'balanced',        // 'privacy' | 'balanced' | 'quality'
+  maxEvents: 300,            // 环形缓冲区最大事件数
+  // 也可细化 rrweb 的 sampling/recordOptions
+  sampling: { mousemove: 50, scroll: 50, input: 'last' },
+  recordOptions: { maskAllInputs: false, recordCanvas: false } as any,
 });
 ```
 
-2) 错误发生时，平台/服务端即可拿到 `rrwebSnapshot`，用于回放。
+## 配置项
+- preset: 'privacy' | 'balanced' | 'quality'（默认 'balanced'）
+  - privacy：更强隐私，输入/媒体采样更低，默认 maskAllInputs = true
+  - balanced：通用平衡方案
+  - quality：更高质量，事件更密集，可能带来更大体积
+- maxEvents: number（默认与 preset 匹配，200/300/600）
+- sampling: rrweb sampling 配置（可覆盖 preset 默认）
+- recordOptions: rrweb record 配置（可覆盖 preset 默认）
 
-## 2. 三套预设（开箱即用）
-- privacy（高隐私）
-  - 采样：`mousemove: 80, scroll: 80, input: 'last', media: 80`
-  - 录制：`maskAllInputs: true, recordCanvas: false`
-  - 缓冲：`maxEvents: 200`
-- balanced（均衡，默认）
-  - 采样：`mousemove: 50, scroll: 50, input: 'last', media: 50`
-  - 录制：`maskAllInputs: false, recordCanvas: false`
-  - 缓冲：`maxEvents: 300`
-- quality（高质量/排障期）
-  - 采样：`mousemove: 20, scroll: 20, input: 'all', media: 20`
-  - 录制：`maskAllInputs: false, recordCanvas: true`
-  - 缓冲：`maxEvents: 600`
-
-用法：
+## 取用录屏片段
+错误插件会在上报前通过全局调试 API 读取最近片段：
 ```ts
-tracker.use(RrwebPlugin, { preset: 'privacy' });
+const api = (window as any).$hawkRrweb;
+const recent = api?.getReplay({ maxSize: 300, maxBytes: 64 * 1024 });
 ```
+- maxSize：限制事件条数（默认取插件当前 `maxEvents`）
+- maxBytes（新增）：基于 JSON 近似字节的裁剪上限，超过时自动丢弃最早 10%（至少 1 条），优先保留最新事件
 
-## 3. 精细化配置（覆盖预设）
-你可以覆盖任意预设项：
-- `sampling`：高频事件采样（越小越细，体积越大）
-- `recordOptions`：直接透传 rrweb record 的原生配置
-- `maxEvents`：内存缓冲上限（只保留最近 N 条）
+## 调试 API
+安装后会在浏览器注入两个调试对象：
+- `window.__hawk_rrweb`（新）
+  - getEvents(): any[]
+  - getErrorPoints(): { type, error, timestamp, eventIndex }[]
+  - markErrorPoint(info: { type: string; error: any; timestamp?: number })
+  - stop(): void
+- `window.$hawkRrweb`（兼容旧）
+  - getReplay({ maxSize?, maxBytes? }): any[]
+  - getErrorContext(): { errorPoint, eventsBeforeError, eventsAfterError, totalEvents, errorCount }
+  - markErrorPoint(info)
 
-示例：
-```ts
-tracker.use(RrwebPlugin, {
-  preset: 'privacy',
-  sampling: {
-    mouseInteraction: true, // 开启鼠标交互子类
-    canvas: 'all'           // 捕获全部 Canvas
-  },
-  maxEvents: 400,
-  recordOptions: {
-    blockClass: 'rr-block',            // 该 class 的元素不录制
-    maskAllInputs: true,               // 输入统一脱敏
-    maskTextSelector: '[data-privacy=text]',
-    recordCanvas: false,
-    inlineStylesheet: true             // 将样式内联，便于离线回放
-  }
-});
-```
+> 建议：与 `@hawk-tracker/plugin-error` 配合，在错误发生时附带最近录屏片段，用于回放定位。
 
-常用 `sampling` 字段（部分）：
-- `mousemove: number|boolean`（默认见预设；单位 ms，false 关）
-- `scroll: number|boolean`
-- `media: number`
-- `input: 'last'|'all'`
-- `canvas: number|'all'`
-- `mouseInteraction: boolean|Record<string, boolean>`
-- `mousemoveCallback: number`
-
-常用 `recordOptions` 字段（部分）：
-- 隐私/过滤：`blockClass`、`blockSelector`、`ignoreClass`、`maskAllInputs`、`maskTextClass`、`maskTextSelector`、`maskInputOptions`、`maskTextFn`、`maskInputFn`
-- 录制能力：`recordCanvas`、`inlineStylesheet`、`collectFonts`、`plugins`
-- 高级：`slimDOMOptions`、`inlineShadowDom`、`packFn/unpackFn` 等
-
-## 4. 与错误插件联动（如何附带片段）
-- `ErrorPlugin` 默认 `attachRrweb: true`
-- 发生错误时，会从 `window.$hawkRrweb.getReplay({ maxSize })` 读取最近事件，放在错误 payload 的 `rrwebSnapshot` 字段
-- 注意初始化顺序：先 `RrwebPlugin` 后 `ErrorPlugin`
-
-```ts
-tracker.use(RrwebPlugin, { preset: 'balanced' });
-tracker.use(ErrorPlugin, { attachRrweb: true, rrwebMaxSize: 200 });
-```
-
-## 5. 运行期 API
-- 全局对象：`window.$hawkRrweb`
-  - `getReplay({ maxSize })`：获取最近 `maxSize` 条 rrweb 事件（不传默认 `maxEvents`）
-  - `stop()`：停止录制；再次 `install()` 可重启
-
-## 6. 常见问题（FAQ）
-- 为什么“感觉看不到 DOM 变化”？
-  - 我们默认只在错误发生时附带“最近片段”。日常不报错时不上传，带宽友好。你可以在平台端接入 `rrweb-player` 展示回放。
-- 体积/性能如何控制？
-  - 提高采样间隔、关闭不必要的录制（如 `recordCanvas: false`）、降低 `maxEvents`、开启 `mask*` 与 `slimDOMOptions`。
-- 隐私怎么保障？
-  - 指定 `blockClass`/`blockSelector` 屏蔽敏感区域；使用 `maskAllInputs`、`maskText*` 系列对输入/文本脱敏；必要时自定义 `mask*Fn`。
-- SSR/Node 环境安全吗？
-  - 插件内部在 `install()` 中做了 `typeof window` 检查，非浏览器环境不会启动。
- 
+## 最佳实践
+- 生产环境采用 `preset: 'balanced'` 或 `privacy`，并限制 `maxEvents` + `maxBytes`
+- 对敏感输入类页面建议开启 `maskAllInputs: true`
+- 录屏只在必要时取用并上报，避免流量暴涨
