@@ -1,9 +1,96 @@
+
+import { Link } from 'react-router-dom';
 import logoDark from "./logo-dark.svg";
 import logoLight from "./logo-light.svg";
 
 export function Welcome() {
   return (
     <main className="flex items-center justify-center pt-16 pb-4">
+      {/* 右上角的按钮组 */}
+      <div className="absolute top-4 right-4 flex items-center gap-3">
+        {/* 项目管理按钮 */}
+        <Link
+          to="/projects"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            className="stroke-current"
+          >
+            <path
+              d="M3 3h18v18H3V3z"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M9 9h6v6H9V9z"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M3 9h6"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M15 9h6"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M3 15h6"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M15 15h6"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          项目管理
+        </Link>
+        
+        {/* 个人设置按钮 */}
+        <Link
+          to="/profile"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            className="stroke-current"
+          >
+            <path
+              d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          个人设置
+        </Link>
+      </div>
+
       <div className="flex-1 flex flex-col items-center gap-16 min-h-0">
         <header className="flex flex-col items-center gap-9">
           <div className="w-[500px] max-w-[100vw] p-4">
@@ -22,7 +109,7 @@ export function Welcome() {
         <div className="max-w-[300px] w-full space-y-6 px-4">
           <nav className="rounded-3xl border border-gray-200 p-6 dark:border-gray-700 space-y-4">
             <p className="leading-6 text-gray-700 dark:text-gray-200 text-center">
-              What&apos;s next?
+              下一步是什么？
             </p>
             <ul>
               {resources.map(({ href, text, icon }) => (
@@ -49,7 +136,7 @@ export function Welcome() {
 const resources = [
   {
     href: "https://reactrouter.com/docs",
-    text: "React Router Docs",
+    text: "React Router 文档",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -69,7 +156,7 @@ const resources = [
   },
   {
     href: "https://rmx.as/discord",
-    text: "Join Discord",
+    text: "加入 Discord",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
