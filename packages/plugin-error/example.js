@@ -12,21 +12,25 @@ import { RrwebPlugin } from '@hawk-tracker/plugin-rrweb';
 const vueCore = init({
   dsn: 'https://your-server.com/collect',
   appId: 'my-vue-app',
-  version: '1.0.0'
+  version: '1.0.0',
 });
 
 // 安装录屏插件
-vueCore.use(new RrwebPlugin({
-  preset: 'balanced',
-  maxEvents: 500
-}));
+vueCore.use(
+  new RrwebPlugin({
+    preset: 'balanced',
+    maxEvents: 500,
+  }),
+);
 
 // 安装错误插件，启用录屏关联
-vueCore.use(new ErrorPlugin({
-  attachRrweb: true,
-  rrwebMaxSize: 200,
-  behaviorSnapshotCount: 50
-}));
+vueCore.use(
+  new ErrorPlugin({
+    attachRrweb: true,
+    rrwebMaxSize: 200,
+    behaviorSnapshotCount: 50,
+  }),
+);
 
 // 注册错误处理器（不传参）
 Vue.config.errorHandler = createVueErrorHandler();
@@ -35,7 +39,7 @@ Vue.config.errorHandler = createVueErrorHandler();
 const vueCoreWithParam = init({
   dsn: 'https://your-server.com/collect',
   appId: 'my-vue-app',
-  version: '1.0.0'
+  version: '1.0.0',
 });
 
 // 注册错误处理器（传参）
@@ -50,21 +54,25 @@ import { withReactErrorBoundary } from '@hawk-tracker/plugin-error';
 const reactCore = init({
   dsn: 'https://your-server.com/collect',
   appId: 'my-react-app',
-  version: '1.0.0'
+  version: '1.0.0',
 });
 
 // 安装录屏插件
-reactCore.use(new RrwebPlugin({
-  preset: 'balanced',
-  maxEvents: 500
-}));
+reactCore.use(
+  new RrwebPlugin({
+    preset: 'balanced',
+    maxEvents: 500,
+  }),
+);
 
 // 安装错误插件，启用录屏关联
-reactCore.use(new ErrorPlugin({
-  attachRrweb: true,
-  rrwebMaxSize: 200,
-  behaviorSnapshotCount: 50
-}));
+reactCore.use(
+  new ErrorPlugin({
+    attachRrweb: true,
+    rrwebMaxSize: 200,
+    behaviorSnapshotCount: 50,
+  }),
+);
 
 // 原始组件
 function App() {
@@ -91,7 +99,7 @@ const SafeApp = withReactErrorBoundary()(App);
 const reactCoreWithParam = init({
   dsn: 'https://your-server.com/collect',
   appId: 'my-react-app',
-  version: '1.0.0'
+  version: '1.0.0',
 });
 
 // 包装组件（传参）
@@ -116,7 +124,7 @@ function demonstrateErrorRecording() {
     // 2. 标记录屏时间点
     // 3. 收集错误上下文
     // 4. 发送完整数据到服务器
-    
+
     console.log('错误已被捕获并关联录屏数据');
   }
 }
@@ -128,19 +136,19 @@ function getRecordingData() {
     // 获取最近的录屏事件
     const replay = api.getReplay({ maxSize: 100 });
     console.log('录屏回放数据:', replay);
-    
+
     // 获取错误上下文
     const errorContext = api.getErrorContext({
       errorType: 'Error',
       errorMessage: '测试错误',
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
     console.log('错误上下文:', errorContext);
-    
+
     // 获取用户行为
     const userBehavior = api.getErrorBehavior({
       errorType: 'Error',
-      errorMessage: '测试错误'
+      errorMessage: '测试错误',
     });
     console.log('用户行为:', userBehavior);
   }
@@ -172,8 +180,8 @@ const ErrorTestVue = {
     },
     testRecordingData() {
       getRecordingData();
-    }
-  }
+    },
+  },
 };
 
 // React 测试组件
@@ -213,7 +221,7 @@ const SafeErrorTestReact = withReactErrorBoundary()(ErrorTestReact);
 const getConfig = () => {
   const baseConfig = {
     appId: 'my-app',
-    version: '1.0.0'
+    version: '1.0.0',
   };
 
   if (process.env.NODE_ENV === 'development') {
@@ -221,7 +229,7 @@ const getConfig = () => {
       ...baseConfig,
       dsn: 'https://dev-server.com/collect',
       debug: true,
-      sampleRate: 1.0 // 开发环境全量采集
+      sampleRate: 1.0, // 开发环境全量采集
     };
   }
 
@@ -229,7 +237,7 @@ const getConfig = () => {
     ...baseConfig,
     dsn: 'https://prod-server.com/collect',
     debug: false,
-    sampleRate: 0.1 // 生产环境采样 10%
+    sampleRate: 0.1, // 生产环境采样 10%
   };
 };
 

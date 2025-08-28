@@ -35,16 +35,25 @@ export default defineConfig({
       //   PKG_ROOT,
       //   'plugin-rrweb/src/index.ts',
       // ),
-      '@hawk-tracker/core': resolve(__dirname, '../../packages/core/src/index.ts'),
-      '@hawk-tracker/plugin-error': resolve(__dirname, '../../packages/plugin-error/src/index.ts'),
-      '@hawk-tracker/plugin-behavior': resolve(__dirname, '../../packages/plugin-behavior/src/index.ts'),
+      '@hawk-tracker/core': resolve(
+        __dirname,
+        '../../packages/core/src/index.ts',
+      ),
+      '@hawk-tracker/plugin-error': resolve(
+        __dirname,
+        '../../packages/plugin-error/src/index.ts',
+      ),
+      '@hawk-tracker/plugin-behavior': resolve(
+        __dirname,
+        '../../packages/plugin-behavior/src/index.ts',
+      ),
     },
   },
   optimizeDeps: {
     include: [
       '@hawk-tracker/core',
-      '@hawk-tracker/plugin-error', 
-      '@hawk-tracker/plugin-behavior'
+      '@hawk-tracker/plugin-error',
+      '@hawk-tracker/plugin-behavior',
     ],
   },
 });

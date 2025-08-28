@@ -121,8 +121,11 @@ export class RrwebPlugin extends BasePlugin {
     };
 
     // 全局调试 API（旧，向后兼容给错误插件使用）
-    ;(window as any).$hawkRrweb = {
-      getReplay: ({ maxSize = this.options.maxEvents, maxBytes }: { maxSize?: number; maxBytes?: number } = {}) => {
+    (window as any).$hawkRrweb = {
+      getReplay: ({
+        maxSize = this.options.maxEvents,
+        maxBytes,
+      }: { maxSize?: number; maxBytes?: number } = {}) => {
         const size = Math.min(maxSize, this.events.length);
         let slice = this.events.slice(this.events.length - size);
         if (typeof maxBytes === 'number' && maxBytes > 0) {
@@ -159,7 +162,11 @@ export class RrwebPlugin extends BasePlugin {
           errorCount: this.errorPoints.length,
         };
       },
-      markErrorPoint: (info: { type: string; error: any; timestamp?: number }) => {
+      markErrorPoint: (info: {
+        type: string;
+        error: any;
+        timestamp?: number;
+      }) => {
         (window as any).__hawk_rrweb.markErrorPoint(info);
       },
     };

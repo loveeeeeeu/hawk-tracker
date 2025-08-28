@@ -1,6 +1,7 @@
 # Hawk Tracker 监控系统文档
 
 ## 📋 目录
+
 - [系统概述](#系统概述)
 - [文件修改前后对比](#文件修改前后对比)
 - [启动方式](#启动方式)
@@ -13,11 +14,13 @@
 ## 🎯 系统概述
 
 Hawk Tracker 是一个完整的 Web 应用监控系统，包含：
+
 - **Server端**: Koa.js 数据接收和处理服务
 - **Web端**: React 监控数据展示平台
 - **SDK**: 前端监控数据收集和上报
 
 ### 技术栈
+
 - **Server**: Koa.js, TypeScript, pnpm
 - **Web**: React, React Router v7, TypeScript, Tailwind CSS v3
 - **SDK**: Hawk Tracker Core + Plugins (Error, Performance, Behavior)
@@ -28,6 +31,7 @@ Hawk Tracker 是一个完整的 Web 应用监控系统，包含：
 ### 🔧 Server端修改
 
 #### 修改前状态
+
 - 使用 `koa-logger` 中间件（存在类型问题）
 - 没有数据存储机制
 - 没有通用数据接收端点
@@ -36,6 +40,7 @@ Hawk Tracker 是一个完整的 Web 应用监控系统，包含：
 #### 修改后状态
 
 **apps/server/src/index.ts**
+
 ```typescript
 // 主要变更：
 - 移除了有问题的 koa-logger
@@ -47,6 +52,7 @@ Hawk Tracker 是一个完整的 Web 应用监控系统，包含：
 ```
 
 **apps/server/src/router.ts**
+
 ```typescript
 // 主要变更：
 - 添加了通用数据接收端点 POST /api
@@ -58,6 +64,7 @@ Hawk Tracker 是一个完整的 Web 应用监控系统，包含：
 ```
 
 **apps/server/package.json**
+
 ```json
 // 主要变更：
 - 添加了 @koa/cors, @koa/router 依赖
@@ -69,6 +76,7 @@ Hawk Tracker 是一个完整的 Web 应用监控系统，包含：
 ### 🌐 Web端修改
 
 #### 修改前状态
+
 - 使用 MockAPI 模拟数据
 - 没有真实的监控SDK集成
 - Tailwind CSS v4 配置有问题
@@ -77,6 +85,7 @@ Hawk Tracker 是一个完整的 Web 应用监控系统，包含：
 #### 修改后状态
 
 **apps/web/app/monitor.ts (新增)**
+
 ```typescript
 // 完整功能：
 - Hawk Tracker SDK 完整配置
@@ -88,6 +97,7 @@ Hawk Tracker 是一个完整的 Web 应用监控系统，包含：
 ```
 
 **apps/web/app/root.tsx**
+
 ```typescript
 // 主要变更：
 - 添加了 useEffect 调用 initMonitor()
@@ -95,6 +105,7 @@ Hawk Tracker 是一个完整的 Web 应用监控系统，包含：
 ```
 
 **apps/web/app/components/projects/[projectId]/log/overview/page.tsx**
+
 ```typescript
 // 主要变更：
 - 改为从 localhost:3001/api/stats 获取真实统计数据
@@ -104,6 +115,7 @@ Hawk Tracker 是一个完整的 Web 应用监控系统，包含：
 ```
 
 **apps/web/app/app.css**
+
 ```css
 // 主要变更：
 - 从 Tailwind CSS v4 迁移到 v3
@@ -113,6 +125,7 @@ Hawk Tracker 是一个完整的 Web 应用监控系统，包含：
 ```
 
 **apps/web/postcss.config.mjs**
+
 ```javascript
 // 主要变更：
 - 改为直接定义 tailwindcss 和 autoprefixer 插件
@@ -122,6 +135,7 @@ Hawk Tracker 是一个完整的 Web 应用监控系统，包含：
 ## 🚀 启动方式
 
 ### 1. 启动Server
+
 ```bash
 # 进入Server目录
 cd apps/server
@@ -136,6 +150,7 @@ node dist/index.js
 **Server运行地址**: `http://localhost:3001`
 
 ### 2. 启动Web
+
 ```bash
 # 进入Web目录
 cd apps/web
@@ -147,6 +162,7 @@ pnpm dev
 **Web运行地址**: `http://localhost:3000`
 
 ### 3. 同时启动两个服务
+
 ```bash
 # 终端1 - 启动Server
 cd apps/server && pnpm build && node dist/index.js
@@ -158,6 +174,7 @@ cd apps/web && pnpm dev
 ## 📊 数据流程
 
 ### 1. 监控数据收集流程
+
 ```mermaid
 graph LR
     A[用户操作] --> B[Hawk Tracker SDK]
@@ -167,6 +184,7 @@ graph LR
 ```
 
 **详细步骤**:
+
 1. 用户在Web应用中执行操作
 2. Hawk Tracker SDK 自动收集相关数据
 3. 数据进入内部队列
@@ -174,6 +192,7 @@ graph LR
 5. 数据发送到 Server 的 `/api` 端点
 
 ### 2. Server数据处理流程
+
 ```mermaid
 graph LR
     A[POST /api] --> B[解析数据队列]
@@ -184,6 +203,7 @@ graph LR
 ```
 
 **详细步骤**:
+
 1. Server 接收 POST 请求到 `/api` 端点
 2. 解析请求体中的 `dataQueue` 数组
 3. 根据每个数据项的 `type` 字段分类
@@ -192,6 +212,7 @@ graph LR
 6. 通过 GET 接口提供数据查询服务
 
 ### 3. Web数据展示流程
+
 ```mermaid
 graph LR
     A[Web页面] --> B[fetch localhost:3001/api/stats]
@@ -201,6 +222,7 @@ graph LR
 ```
 
 **详细步骤**:
+
 1. Web页面组件挂载时发起数据请求
 2. 从 Server 获取统计数据和最近数据
 3. 更新组件状态并重新渲染
@@ -210,6 +232,7 @@ graph LR
 ## 📈 系统状态
 
 ### ✅ 已完成功能
+
 - ✅ Server数据接收和存储
 - ✅ Web监控SDK集成
 - ✅ 基础数据展示
@@ -219,6 +242,7 @@ graph LR
 - ✅ 自动数据刷新机制
 
 ### ⚠️ 需要完善功能
+
 - ⚠️ 性能监控页面（只有占位符）
 - ⚠️ 用户行为页面（功能不完整）
 - ⚠️ 数据可视化图表
@@ -227,6 +251,7 @@ graph LR
 - ⚠️ 数据筛选和搜索功能
 
 ### 🔄 当前数据存储
+
 - **存储方式**: 内存存储
 - **数据持久性**: 重启后数据丢失
 - **数据分类**: errors, performance, behaviors, events
@@ -235,12 +260,15 @@ graph LR
 ## 🔧 联调指南
 
 ### 1. 环境准备
+
 确保以下服务正常运行：
+
 - Node.js 18+
 - pnpm 8+
 - 端口 3000 和 3001 可用
 
 ### 2. 启动步骤
+
 ```bash
 # 步骤1: 启动Server
 cd apps/server
@@ -257,6 +285,7 @@ pnpm dev
 ```
 
 ### 3. 测试数据流
+
 ```bash
 # 测试1: 触发错误
 # 在浏览器控制台执行:
@@ -276,6 +305,7 @@ throw new Error('测试错误');
 ```
 
 ### 4. 验证检查点
+
 - ✅ Server控制台显示启动成功
 - ✅ Web页面正常加载
 - ✅ 监控概览页面显示数据
@@ -288,9 +318,11 @@ throw new Error('测试错误');
 ### 数据接收接口
 
 #### POST /api
+
 接收监控数据的主要接口
 
 **请求格式**:
+
 ```json
 {
   "dataQueue": [
@@ -308,6 +340,7 @@ throw new Error('测试错误');
 ```
 
 **响应格式**:
+
 ```json
 {
   "success": true,
@@ -319,9 +352,11 @@ throw new Error('测试错误');
 ### 数据查询接口
 
 #### GET /api/stats
+
 获取统计数据
 
 **响应格式**:
+
 ```json
 {
   "success": true,
@@ -336,14 +371,17 @@ throw new Error('测试错误');
 ```
 
 #### GET /api/data
+
 获取详细数据列表
 
 **查询参数**:
+
 - `type`: 数据类型 (events|errors|performance|behaviors|all)
 - `limit`: 每页数量 (默认100)
 - `page`: 页码 (默认1)
 
 **响应格式**:
+
 ```json
 {
   "success": true,
@@ -358,9 +396,11 @@ throw new Error('测试错误');
 ```
 
 #### DELETE /api/data
+
 清空所有数据（开发用）
 
 **响应格式**:
+
 ```json
 {
   "success": true,
@@ -373,24 +413,29 @@ throw new Error('测试错误');
 ### 常见问题
 
 #### 1. Server启动失败
+
 **错误**: `Cannot find module 'koa-router'`
 **解决**: 确保使用 `@koa/router` 而不是 `koa-router`
 
 #### 2. Web启动失败
+
 **错误**: `Cannot find module '@tailwindcss/postcss'`
 **解决**: 确保使用 Tailwind CSS v3 配置
 
 #### 3. SDK数据上报失败
+
 **错误**: `POST http://localhost:3001/api 404 (Not Found)`
 **解决**: 确保Server已启动并重新构建
 
 #### 4. 数据不显示
+
 **错误**: Web页面显示"加载中..."
 **解决**: 检查Server是否正常运行，网络连接是否正常
 
 ### 调试技巧
 
 #### Server调试
+
 ```bash
 # 查看Server日志
 cd apps/server
@@ -401,6 +446,7 @@ curl http://localhost:3001/api/stats
 ```
 
 #### Web调试
+
 ```bash
 # 查看浏览器控制台
 # 检查SDK初始化日志
@@ -412,6 +458,7 @@ trackEvent('test', { message: '测试事件' });
 ```
 
 #### SDK调试
+
 ```javascript
 // 在浏览器控制台查看SDK状态
 console.log(window.hawkTracker);
@@ -423,17 +470,20 @@ window.hawkTracker.flush();
 ## 📚 相关文件
 
 ### 核心配置文件
+
 - `apps/server/src/index.ts` - Server主文件
 - `apps/server/src/router.ts` - API路由定义
 - `apps/web/app/monitor.ts` - 监控SDK配置
 - `apps/web/app/root.tsx` - Web应用根组件
 
 ### 数据展示页面
+
 - `apps/web/app/components/projects/[projectId]/log/overview/page.tsx` - 监控概览
 - `apps/web/app/components/projects/[projectId]/log/errors-log/page.tsx` - 错误日志
 - `apps/web/app/components/projects/[projectId]/log/performance/page.tsx` - 性能监控
 
 ### 构建配置
+
 - `apps/server/package.json` - Server依赖配置
 - `apps/web/package.json` - Web依赖配置
 - `apps/web/vite.config.ts` - Vite构建配置
@@ -443,4 +493,4 @@ window.hawkTracker.flush();
 
 **文档版本**: 1.0.0  
 **最后更新**: 2024年12月  
-**维护者**: Hawk Tracker Team 
+**维护者**: Hawk Tracker Team

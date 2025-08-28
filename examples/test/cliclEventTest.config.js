@@ -5,7 +5,7 @@ export const clickEventTestConfig = {
     dsn: 'https://your-dsn.com',
     appName: 'click-event-test',
     debug: true,
-    sampleRate: 1
+    sampleRate: 1,
   },
 
   // 点击事件配置
@@ -16,7 +16,14 @@ export const clickEventTestConfig = {
     capturePosition: true,
     captureElementInfo: true,
     maxElementTextLength: 100,
-    customAttributes: ['category', 'action', 'value', 'user-type', 'product-id', 'price']
+    customAttributes: [
+      'category',
+      'action',
+      'value',
+      'user-type',
+      'product-id',
+      'price',
+    ],
   },
 
   // 测试场景配置
@@ -26,20 +33,16 @@ export const clickEventTestConfig = {
       eventId: 'test-button-1',
       title: '测试按钮1',
       category: 'test',
-      action: 'click'
+      action: 'click',
     },
 
     // 忽略元素测试
-    ignoredElements: [
-      '.no-track',
-      '[data-no-track]',
-      '.ignore-click'
-    ],
+    ignoredElements: ['.no-track', '[data-no-track]', '.ignore-click'],
 
     // 嵌套元素测试
     nestedElements: {
       containerId: 'nested-container',
-      childSelectors: ['button', 'span', 'div']
+      childSelectors: ['button', 'span', 'div'],
     },
 
     // 动态元素测试
@@ -48,8 +51,8 @@ export const clickEventTestConfig = {
         eventId: 'dynamic-button',
         title: '动态生成的按钮',
         category: 'dynamic',
-        action: 'click'
-      }
+        action: 'click',
+      },
     },
 
     // 复杂交互测试
@@ -58,34 +61,42 @@ export const clickEventTestConfig = {
         productCard: {
           eventId: 'product-card',
           category: 'ecommerce',
-          action: 'view'
+          action: 'view',
         },
         addToCart: {
           eventId: 'add-to-cart',
           category: 'ecommerce',
-          action: 'add'
+          action: 'add',
         },
         buyNow: {
           eventId: 'buy-now',
           category: 'ecommerce',
-          action: 'purchase'
-        }
-      }
-    }
+          action: 'purchase',
+        },
+      },
+    },
   },
 
   // 验证规则
   validation: {
     // 必须包含的字段
-    requiredFields: ['eventId', 'eventType', 'triggerPageUrl', 'triggerTime', 'elementPath', 'x', 'y'],
-    
+    requiredFields: [
+      'eventId',
+      'eventType',
+      'triggerPageUrl',
+      'triggerTime',
+      'elementPath',
+      'x',
+      'y',
+    ],
+
     // 可选字段
     optionalFields: ['title', 'elementId', 'params'],
-    
+
     // 参数验证
     paramValidation: {
       category: ['test', 'ecommerce', 'nested', 'dynamic'],
-      action: ['click', 'view', 'add', 'purchase', 'container-click']
-    }
-  }
+      action: ['click', 'view', 'add', 'purchase', 'container-click'],
+    },
+  },
 };

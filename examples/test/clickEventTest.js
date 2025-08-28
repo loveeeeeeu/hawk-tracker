@@ -9,9 +9,9 @@ const hawkTracker = init({
   appVersion: '1.0.0',
   sampleRate: 1,
   debug: true,
-  behavior: { 
-    core: true, 
-    maxSize: 100, 
+  behavior: {
+    core: true,
+    maxSize: 100,
     debug: true,
     click: {
       enabled: true,
@@ -22,8 +22,8 @@ const hawkTracker = init({
         logEvent('点击事件被捕获', event);
         updateStats();
         return event;
-      }
-    }
+      },
+    },
   },
 });
 
@@ -42,7 +42,7 @@ const behaviorStack = hawkTracker.getBehaviorStack('click-test-stack');
 let stats = {
   totalClicks: 0,
   trackedClicks: 0,
-  ignoredClicks: 0
+  ignoredClicks: 0,
 };
 
 // 日志管理
@@ -56,7 +56,7 @@ class EventLogger {
   log(message, data = null) {
     const timestamp = new Date().toLocaleTimeString();
     const logEntry = `[${timestamp}] ${message}`;
-    
+
     if (data) {
       console.log(logEntry, data);
       this.logElement.textContent += `${logEntry}\n${JSON.stringify(data, null, 2)}\n\n`;
@@ -64,7 +64,7 @@ class EventLogger {
       console.log(logEntry);
       this.logElement.textContent += `${logEntry}\n`;
     }
-    
+
     this.logElement.scrollTop = this.logElement.scrollHeight;
   }
 
@@ -86,15 +86,16 @@ const logger = new EventLogger();
 document.addEventListener('click', (e) => {
   stats.totalClicks++;
   updateStats();
-  
+
   // 检查是否被忽略
-  const isIgnored = e.target.closest('.no-track') || e.target.closest('[data-no-track]');
+  const isIgnored =
+    e.target.closest('.no-track') || e.target.closest('[data-no-track]');
   if (isIgnored) {
     stats.ignoredClicks++;
     logger.log('点击被忽略', {
       element: e.target.tagName,
       className: e.target.className,
-      reason: '元素被忽略'
+      reason: '元素被忽略',
     });
   } else if (e.target.hasAttribute('data-tracking-event-id')) {
     stats.trackedClicks++;
@@ -106,15 +107,15 @@ function updateStats() {
   document.getElementById('total-clicks').textContent = stats.totalClicks;
   document.getElementById('tracked-clicks').textContent = stats.trackedClicks;
   document.getElementById('ignored-clicks').textContent = stats.ignoredClicks;
-  document.getElementById('behavior-stack-size').textContent = 
+  document.getElementById('behavior-stack-size').textContent =
     behaviorStack?.getStats?.()?.size || 0;
-  
+
   // 更新行为栈快照
   logger.updateSnapshot();
 }
 
 // 控制函数
-window.enableClickTracking = function() {
+window.enableClickTracking = function () {
   if (hawkTracker.enableClickTracking) {
     hawkTracker.enableClickTracking();
     document.getElementById('tracking-status').textContent = '状态: 已启用';
@@ -123,7 +124,7 @@ window.enableClickTracking = function() {
   }
 };
 
-window.disableClickTracking = function() {
+window.disableClickTracking = function () {
   if (hawkTracker.disableClickTracking) {
     hawkTracker.disableClickTracking();
     document.getElementById('tracking-status').textContent = '状态: 已禁用';
@@ -132,7 +133,7 @@ window.disableClickTracking = function() {
   }
 };
 
-window.clearLogs = function() {
+window.clearLogs = function () {
   logger.clear();
   stats = { totalClicks: 0, trackedClicks: 0, ignoredClicks: 0 };
   updateStats();
@@ -157,9 +158,12 @@ class TestResults {
   }
 
   updateDisplay() {
-    this.element.textContent = this.results.map(result => 
-      `${result.passed ? '✅' : '❌'} ${result.name}: ${result.details}`
-    ).join('\n');
+    this.element.textContent = this.results
+      .map(
+        (result) =>
+          `${result.passed ? '✅' : '❌'} ${result.name}: ${result.details}`,
+      )
+      .join('\n');
   }
 
   clear() {
@@ -171,72 +175,85 @@ class TestResults {
 const testResults = new TestResults();
 
 // 自动化测试函数
-window.runAutomatedTests = async function() {
+window.runAutomatedTests = async function () {
   testResults.clear();
   logger.log('开始自动化测试...');
-  
+
   const tests = [
     {
       name: '基础点击事件捕获',
       test: () => {
-        const button = document.querySelector('[data-tracking-event-id="btn-1"]');
+        const button = document.querySelector(
+          '[data-tracking-event-id="btn-1"]',
+        );
         if (!button) return false;
-        
+
         const initialSize = behaviorStack?.getStats?.()?.size || 0;
         button.click();
-        
+
         // 等待事件处理
         setTimeout(() => {
           const newSize = behaviorStack?.getStats?.()?.size || 0;
           const passed = newSize > initialSize;
-          testResults.addTest('基础点击事件捕获', passed, 
-            `栈大小: ${initialSize} -> ${newSize}`);
+          testResults.addTest(
+            '基础点击事件捕获',
+            passed,
+            `栈大小: ${initialSize} -> ${newSize}`,
+          );
         }, 100);
-      }
+      },
     },
     {
       name: '忽略元素测试',
       test: () => {
         const button = document.querySelector('.no-track');
         if (!button) return false;
-        
+
         const initialSize = behaviorStack?.getStats?.()?.size || 0;
         button.click();
-        
+
         setTimeout(() => {
           const newSize = behaviorStack?.getStats?.()?.size || 0;
           const passed = newSize === initialSize; // 应该不增加
-          testResults.addTest('忽略元素测试', passed, 
-            `栈大小: ${initialSize} -> ${newSize} (应该不变)`);
+          testResults.addTest(
+            '忽略元素测试',
+            passed,
+            `栈大小: ${initialSize} -> ${newSize} (应该不变)`,
+          );
         }, 100);
-      }
+      },
     },
     {
       name: '自定义属性提取',
       test: () => {
         const button = document.querySelector('[data-category="test"]');
         if (!button) return false;
-        
+
         button.click();
-        
+
         setTimeout(() => {
           const snapshot = behaviorStack?.getSnapshot?.({ maxCount: 1 }) || [];
           const lastEvent = snapshot[snapshot.length - 1];
-          const hasCustomAttr = lastEvent && lastEvent.params && 
-                               lastEvent.params.category === 'test';
-          testResults.addTest('自定义属性提取', hasCustomAttr, 
-            hasCustomAttr ? '属性提取成功' : '属性提取失败');
+          const hasCustomAttr =
+            lastEvent &&
+            lastEvent.params &&
+            lastEvent.params.category === 'test';
+          testResults.addTest(
+            '自定义属性提取',
+            hasCustomAttr,
+            hasCustomAttr ? '属性提取成功' : '属性提取失败',
+          );
         }, 100);
-      }
-    }
+      },
+    },
   ];
 
   // 执行测试
   for (const test of tests) {
     test.test();
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 200));
   }
-  
+
   logger.log('自动化测试完成');
 };
 
@@ -245,7 +262,7 @@ logger.log('点击事件测试页面已加载');
 logger.log('Hawk Tracker 配置:', {
   dsn: hawkTracker.config?.dsn,
   clickEnabled: hawkTracker.config?.behavior?.click?.enabled,
-  ignoreSelectors: hawkTracker.config?.behavior?.click?.ignoreSelectors
+  ignoreSelectors: hawkTracker.config?.behavior?.click?.ignoreSelectors,
 });
 
 // 定期更新统计

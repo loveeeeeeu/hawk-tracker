@@ -80,14 +80,15 @@ export class DataSender {
       maxRetry: config.maxRetry ?? 5,
       backoffBaseMs: config.backoffBaseMs ?? 1000,
       backoffMaxMs: config.backoffMaxMs ?? 30000,
-        // 新增配置项
+      // 新增配置项
       cacheMaxLength: config.cacheMaxLength ?? 10,
       cacheWaitingTime: config.cacheWaitingTime ?? 100,
       appName: config.appName ?? 'unknown-app',
       // 新增：速率与断路器
       rateLimitPerSec: config.rateLimitPerSec ?? 5,
       circuitOpenMs: config.circuitOpenMs ?? 5000,
-      maxConsecutiveTransportFailures: config.maxConsecutiveTransportFailures ?? 3,
+      maxConsecutiveTransportFailures:
+        config.maxConsecutiveTransportFailures ?? 3,
     } as Required<SenderConfig>;
 
     if (this.config.debug) {
@@ -429,7 +430,6 @@ export class DataSender {
       // 这里可以放置会话 ID 或其他客户端信息
     };
   }
-  
 
   /**
    * 点击事件缓存
@@ -484,7 +484,7 @@ export class DataSender {
       });
 
       const success = response.ok;
-      
+
       if (this.config.debug) {
         console.log('Click tracking data sent:', { success, events });
       }

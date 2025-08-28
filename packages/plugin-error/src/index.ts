@@ -97,8 +97,11 @@ export class ErrorPlugin extends BasePlugin {
         this.consecutiveFailures = 0; // 视为投递请求已入队成功
       } catch (_) {
         this.consecutiveFailures++;
-        if (this.consecutiveFailures >= (this.options.maxConsecutiveFailures || 3)) {
-          this.circuitOpenUntil = Date.now() + (this.options.circuitOpenMs || 5000);
+        if (
+          this.consecutiveFailures >= (this.options.maxConsecutiveFailures || 3)
+        ) {
+          this.circuitOpenUntil =
+            Date.now() + (this.options.circuitOpenMs || 5000);
           this.consecutiveFailures = 0;
         }
       } finally {
@@ -219,7 +222,10 @@ export class ErrorPlugin extends BasePlugin {
   }
 
   // 生成错误指纹（尽量稳定，避免动态因素）
-  private computeFingerprint(subType: SEND_SUB_TYPES | string, payload: NormalizedErrorData): string {
+  private computeFingerprint(
+    subType: SEND_SUB_TYPES | string,
+    payload: NormalizedErrorData,
+  ): string {
     try {
       const pageUrl = (payload.pageUrl || '').split('?')[0] || '';
 
@@ -227,18 +233,22 @@ export class ErrorPlugin extends BasePlugin {
       if (subType === SEND_SUB_TYPES.RESOURCE || payload.resource) {
         const tag = payload.resource?.tag || '';
         const rawResUrl = String(payload.resource?.url || '');
-        const withoutQuery = (rawResUrl.split('?')[0] || '');
-        const url = (withoutQuery.split('#')[0] || '');
+        const withoutQuery = rawResUrl.split('?')[0] || '';
+        const url = withoutQuery.split('#')[0] || '';
         return `res|${tag}|${url}`;
       }
 
       // HTTP 错误：method + url（去query/hash模板化） + status
       if (payload.http) {
-        const http = payload.http as { url?: string; method?: string; status?: number };
+        const http = payload.http as {
+          url?: string;
+          method?: string;
+          status?: number;
+        };
         const method = (http?.method || 'GET').toUpperCase();
         const rawUrl = String(http?.url || '');
-        const withoutQuery = (rawUrl.split('?')[0] || '');
-        const withoutHash = (withoutQuery.split('#')[0] || '');
+        const withoutQuery = rawUrl.split('?')[0] || '';
+        const withoutHash = withoutQuery.split('#')[0] || '';
         const url = withoutHash
           // 简单模板化：/123/ -> /:id/
           .replace(/\/(\d{3,})\//g, '/:id/')
@@ -262,7 +272,8 @@ export class ErrorPlugin extends BasePlugin {
     try {
       const lines = stack.split('\n').map((s) => s.trim());
       // 取第一条包含 at/（) 的栈帧，去掉行列号
-      const firstLine = lines.find((l) => /at\s+/.test(l) || /\(/.test(l)) || lines[0] || '';
+      const firstLine =
+        lines.find((l) => /at\s+/.test(l) || /\(/.test(l)) || lines[0] || '';
       return firstLine
         .replace(/:\d+:\d+\)?$/, '')
         .replace(/\(.*?\)/, '(*)')
@@ -272,7 +283,10 @@ export class ErrorPlugin extends BasePlugin {
     }
   }
 
-  private shouldSend(subType: SEND_SUB_TYPES | string, payload: NormalizedErrorData): boolean {
+  private shouldSend(
+    subType: SEND_SUB_TYPES | string,
+    payload: NormalizedErrorData,
+  ): boolean {
     try {
       const key = this.computeFingerprint(subType, payload);
       const now = Date.now();
