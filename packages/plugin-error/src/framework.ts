@@ -7,12 +7,12 @@ export function createVueErrorHandler(core?: any) {
       // 优先使用传入的 core，如果没有则使用全局实例
       const targetCore = core || getGlobalHawkTracker();
       if (!targetCore) return;
-      
+
       const message = err?.message || String(err);
       const stack = err?.stack;
       const componentName = vm?.$options?.name || vm?.$options?._componentTag;
       const propsData = vm?.$options?.propsData;
-      
+
       targetCore?.dataSender?.sendData(
         'error',
         SEND_SUB_TYPES.VUE,
@@ -30,22 +30,25 @@ export function createVueErrorHandler(core?: any) {
 
 export function withReactErrorBoundary(core?: any) {
   return function <P>(Component: any): any {
-    return class ErrorBoundary extends (window as any).React.Component<any, any> {
+    return class ErrorBoundary extends (window as any).React.Component<
+      any,
+      any
+    > {
       constructor(props: any) {
         super(props);
         this.state = { hasError: false };
       }
-      
+
       static getDerivedStateFromError() {
         return { hasError: true };
       }
-      
+
       componentDidCatch(error: any, info: any) {
         try {
           // 优先使用传入的 core，如果没有则使用全局实例
           const targetCore = core || getGlobalHawkTracker();
           if (!targetCore) return;
-          
+
           targetCore?.dataSender?.sendData(
             'error',
             SEND_SUB_TYPES.REACT,
@@ -59,7 +62,7 @@ export function withReactErrorBoundary(core?: any) {
           );
         } catch {}
       }
-      
+
       render() {
         if (this.state.hasError) return null;
         return (window as any).React.createElement(Component, this.props);

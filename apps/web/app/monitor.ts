@@ -10,20 +10,20 @@ const monitorConfig = {
   appName: 'Hawk Tracker Web', // 应用名称
   appCode: 'hawk-tracker-web', // 应用代码
   appVersion: '1.0.0', // 应用版本
-  
+
   // 调试配置
   debug: process.env.NODE_ENV === 'development', // 调试模式
   sampleRate: 1.0, // 采样率 100%
-  
+
   // 数据发送配置
-  batchSize: 10, // 批量上报大小
-  sendInterval: 5000, // 上报间隔 5秒
+  batchSize: 1, // 批量上报大小 - 临时改为1，立即上报
+  sendInterval: 1000, // 上报间隔 - 临时改为1秒
   maxRetry: 3, // 最大重试次数
   backoffBaseMs: 1000, // 退避基础时间
   backoffMaxMs: 10000, // 退避最大时间
   maxConcurrentRequests: 3, // 最大并发请求数
   offlineStorageKey: 'hawk_tracker_queue', // 离线存储键名
-  
+
   // 功能开关
   pv: true, // 页面访问统计
   performance: {
@@ -38,14 +38,14 @@ const monitorConfig = {
   event: {
     core: true, // 事件监控
   },
-  
+
   // 行为栈配置
   behavior: {
     core: true, // 启用行为栈管理
     maxSize: 100, // 最大事件数量
     maxAge: 5 * 60 * 1000, // 最大事件年龄 5分钟
     debug: process.env.NODE_ENV === 'development', // 行为栈调试模式
-    
+
     // 点击事件配置
     click: {
       enabled: true, // 启用点击事件监控
@@ -57,23 +57,23 @@ const monitorConfig = {
       customAttributes: ['data-track', 'data-event'], // 自定义属性
     },
   },
-  
+
   // 错误过滤
   ignoreErrors: [
     /Script error\.?/, // 忽略跨域脚本错误
     /ResizeObserver loop limit exceeded/, // 忽略 ResizeObserver 错误
   ],
-  
+
   // 请求过滤
   ignoreRequest: [
     /localhost:3001/, // 忽略对监控服务器的请求
     /\.(css|js|png|jpg|jpeg|gif|svg|ico)$/, // 忽略静态资源
   ],
-  
+
   // 超时配置
   timeout: 10000, // 上报超时时间 10秒
   maxQueueLength: 1000, // 最大队列长度
-  
+
   // 自定义全局参数
   ext: {
     projectId: 'hawk-tracker-web',
@@ -94,13 +94,13 @@ export function initMonitor() {
       appName: monitorConfig.appName,
       debug: monitorConfig.debug,
     });
-    
+
     // 初始化核心监控
     monitorInstance = init(monitorConfig);
-    
+
     // 使用 use 方法加载插件
     console.log('🔌 加载监控插件...');
-    
+
     // 加载错误监控插件
     monitorInstance.use(ErrorPlugin, {
       behaviorStackName: 'user_behavior',
@@ -114,18 +114,30 @@ export function initMonitor() {
       maxConsecutiveFailures: 3,
       circuitOpenMs: 5000,
     });
-    
+
     // 加载性能监控插件
     monitorInstance.use(PerformancePlugin, {
       // 页面性能监控
       pagePerformance: {
         enabled: true,
-        metrics: ['navigation', 'paint', 'largest-contentful-paint', 'first-input-delay'],
+        metrics: [
+          'navigation',
+          'paint',
+          'largest-contentful-paint',
+          'first-input-delay',
+        ],
       },
       // 资源性能监控
       resourcePerformance: {
         enabled: true,
-        includeTypes: ['script', 'css', 'image', 'font', 'fetch', 'xmlhttprequest'],
+        includeTypes: [
+          'script',
+          'css',
+          'image',
+          'font',
+          'fetch',
+          'xmlhttprequest',
+        ],
         excludeUrls: [/localhost:3001/], // 排除监控服务器
       },
       // 接口性能监控
@@ -141,7 +153,7 @@ export function initMonitor() {
         metrics: ['memory', 'longTasks'],
       },
     });
-    
+
     // 加载行为监控插件
     monitorInstance.use(BehaviorPlugin, {
       stackName: 'user_behavior',
@@ -150,10 +162,12 @@ export function initMonitor() {
       debug: process.env.NODE_ENV === 'development',
       enableClick: true,
     });
-    
+
     console.log('✅ Hawk Tracker 监控初始化成功');
-    console.log('📦 已加载插件: ErrorPlugin, PerformancePlugin, BehaviorPlugin');
-    
+    console.log(
+      '📦 已加载插件: ErrorPlugin, PerformancePlugin, BehaviorPlugin',
+    );
+
     return monitorInstance;
   } catch (error) {
     console.error('❌ Hawk Tracker 监控初始化失败:', error);
@@ -172,7 +186,7 @@ export function trackEvent(eventName: string, data: any = {}) {
     console.warn('⚠️ 监控实例未初始化');
     return;
   }
-  
+
   try {
     monitorInstance.track('event', {
       eventName,
@@ -192,7 +206,7 @@ export function trackError(error: Error, extra?: any) {
     console.warn('⚠️ 监控实例未初始化');
     return;
   }
-  
+
   try {
     monitorInstance.track('error', {
       errorType: error.name,
@@ -214,7 +228,7 @@ export function trackPerformance(data: any) {
     console.warn('⚠️ 监控实例未初始化');
     return;
   }
-  
+
   try {
     monitorInstance.track('performance', {
       timestamp: Date.now(),
@@ -233,7 +247,7 @@ export function addBehavior(eventType: string, context?: Record<string, any>) {
     console.warn('⚠️ 监控实例未初始化');
     return false;
   }
-  
+
   try {
     return monitorInstance.pushBehavior({
       type: eventType,
@@ -252,7 +266,7 @@ export function getBehaviors(options?: any) {
     console.warn('⚠️ 监控实例未初始化');
     return [];
   }
-  
+
   try {
     return monitorInstance.getBehaviors(options);
   } catch (error) {
@@ -267,7 +281,7 @@ export function clearBehaviors() {
     console.warn('⚠️ 监控实例未初始化');
     return;
   }
-  
+
   try {
     monitorInstance.clearBehaviors();
     console.log('🗑️ 行为数据已清空');
@@ -279,7 +293,7 @@ export function clearBehaviors() {
 // 获取当前页面信息
 function getCurrentPage(): string {
   if (typeof window === 'undefined') return 'unknown';
-  
+
   const path = window.location.pathname;
   if (path === '/') return 'home';
   if (path.startsWith('/projects')) return 'projects';
@@ -301,11 +315,11 @@ export function destroy() {
   if (monitorInstance) {
     // 清空行为数据
     clearBehaviors();
-    
+
     // 发送剩余数据
     flush();
-    
+
     monitorInstance = null;
     console.log('�� 监控实例已销毁');
   }
-} 
+}

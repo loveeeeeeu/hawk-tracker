@@ -404,6 +404,7 @@ Hawk Tracker Core 的行为栈系统提供了一个强大、灵活、易用的�
 ## 核心接口与配置说明（中文新增）
 
 ### 初始化
+
 ```ts
 import { init } from '@hawk-tracker/core';
 
@@ -433,6 +434,7 @@ const tracker = init({
 ```
 
 ### HawkTracker 公开方法
+
 - use(Plugin, options): 注册插件
 - track(type, data, isImmediate?): 自定义数据上报
 - getBehaviorStack(name='default'): 获取行为栈
@@ -443,6 +445,7 @@ const tracker = init({
 - clearBehaviors(stackName='user_behavior'): 清空栈
 
 ### DataSender 关键配置
+
 - dsn: 上报地址
 - sampleRate: 采样率（0-1），非紧急数据会按采样丢弃
 - batchSize: 批量大小；sendInterval: 批量周期
@@ -453,17 +456,20 @@ const tracker = init({
 - offlineStorageKey: 离线保存队列的 key，离线/卸载时保存，在线恢复时回放
 
 ### 行为栈接口（要点）
+
 - addEvent / addCustomEvent
 - getSnapshot({ maxCount, startTime, endTime, includeTypes, excludeTypes })
 - getStats() / clear() / destroy()
 
 ### 插件集成建议
+
 - 录屏：`@hawk-tracker/plugin-rrweb`，使用 `preset: 'balanced'` 与 `maxBytes = 64KB`
 - 错误：`@hawk-tracker/plugin-error`，启用 `dedupeWindowMs=3000`、`rrwebMaxBytes=64KB`、断路器默认
 - 性能：`@hawk-tracker/plugin-performance`，生产 `sampleRate=0.1~0.3`
 - 行为：`@hawk-tracker/plugin-behavior`，默认快照 50~200
 
 ### 生产环境推荐默认值
+
 ```ts
 const tracker = init({
   debug: false,

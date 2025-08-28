@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { MockAPI, Project, ErrorLog } from '../../../../../api/mockAPI';
+import { trackError } from '../../../../../monitor'; // 导入真实的监控SDK
 
 export default function ErrorLogsPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -31,24 +32,64 @@ export default function ErrorLogsPage() {
     fetchData();
   }, [projectId]);
 
-  // 测试错误功能
+  // 测试错误功能 - 修改为使用真实的Hawk Tracker SDK
   const testError = async (errorType: string) => {
     if (!projectId) return;
     
     try {
-      const errorLog = await MockAPI.addErrorLog(projectId, {
+      // 使用真实的Hawk Tracker SDK上报错误
+      let testError: Error;
+      
+      switch (errorType) {
+        case 'TypeError':
+          testError = new TypeError('这是一个TypeError测试错误');
+          break;
+        case 'ReferenceError':
+          testError = new ReferenceError('这是一个ReferenceError测试错误');
+          break;
+        case '手动错误':
+          testError = new Error('这是一个手动触发的测试错误');
+          break;
+        case '异步错误':
+          // 模拟异步错误
+          setTimeout(() => {
+            const asyncError = new Error('这是一个异步测试错误');
+            trackError(asyncError, { 
+              errorType: 'async',
+              projectId,
+              testMode: true 
+            });
+          }, 100);
+          setErrorCount(prev => prev + 1);
+          alert(`${errorType}错误测试已触发！`);
+          return;
+        default:
+          testError = new Error(`测试${errorType}错误`);
+      }
+      
+      // 使用真实的监控SDK上报错误
+      trackError(testError, { 
+        errorType,
+        projectId,
+        testMode: true,
+        currentPageUrl: window.location.href
+      });
+      
+      // 同时添加到本地状态用于显示
+      const errorLog = {
+        id: `evt-${Date.now()}`,
         eventId: `evt-${Date.now()}`,
-        eventType: '普通错误事件',
+        eventType: `${errorType}测试错误`,
         currentPageUrl: window.location.href,
         timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
-        errorMessage: `测试${errorType}错误`,
-        stackTrace: `at test${errorType} (test.js:1)\nat handleTest (test.js:5)`
-      });
+        errorMessage: testError.message,
+        stackTrace: testError.stack || `at test${errorType} (test.js:1)\nat handleTest (test.js:5)`
+      };
       
       setErrorLogs(prev => [errorLog, ...prev]);
       setErrorCount(prev => prev + 1);
       
-      alert(`${errorType}错误测试成功！`);
+      alert(`${errorType}错误测试成功！已通过Hawk Tracker SDK上报`);
     } catch (error) {
       console.error('测试错误失败:', error);
       alert('测试错误失败，请重试！');
