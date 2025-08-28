@@ -24,12 +24,6 @@ export default [
     'projects/:projectId/trackings',
     'components/projects/[projectId]/trackings/index.tsx',
   ),
-  {
-    path: '/login',
-    file: 'routes/login.tsx',
-  },
-  {
-    path: '/register',
-    file: 'routes/register.tsx',
-  },
+  route('login', 'routes/login.tsx'),
+  route('register', 'routes/register.tsx'),
 ] satisfies RouteConfig;
