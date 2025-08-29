@@ -17,10 +17,10 @@ const hawkTracker = init({
   sendInterval: 5000,
   maxConcurrentRequests: 3,
   offlineStorageKey: 'sdk_report_queue',
-  behavior: { 
-    core: true, 
-    maxSize: 300, 
-    debug: true 
+  behavior: {
+    core: true,
+    maxSize: 300,
+    debug: true,
   },
 });
 

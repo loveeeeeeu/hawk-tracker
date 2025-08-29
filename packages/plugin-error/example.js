@@ -10,7 +10,7 @@ import { createVueErrorHandler } from '@hawk-tracker/plugin-error';
 init({
   dsn: 'https://your-server.com/collect',
   appId: 'my-vue-app',
-  version: '1.0.0'
+  version: '1.0.0',
 });
 
 // 注册错误处理器（不传参）
@@ -20,7 +20,7 @@ Vue.config.errorHandler = createVueErrorHandler();
 const vueCore = init({
   dsn: 'https://your-server.com/collect',
   appId: 'my-vue-app',
-  version: '1.0.0'
+  version: '1.0.0',
 });
 
 // 注册错误处理器（传参）
@@ -35,7 +35,7 @@ import { withReactErrorBoundary } from '@hawk-tracker/plugin-error';
 init({
   dsn: 'https://your-server.com/collect',
   appId: 'my-react-app',
-  version: '1.0.0'
+  version: '1.0.0',
 });
 
 // 原始组件
@@ -63,7 +63,7 @@ const SafeApp = withReactErrorBoundary()(App);
 const reactCore = init({
   dsn: 'https://your-server.com/collect',
   appId: 'my-react-app',
-  version: '1.0.0'
+  version: '1.0.0',
 });
 
 // 包装组件（传参）
@@ -91,8 +91,8 @@ const ErrorTestVue = {
       } catch (error) {
         throw new Error('异步错误测试: ' + error.message);
       }
-    }
-  }
+    },
+  },
 };
 
 // React 测试组件
@@ -127,7 +127,7 @@ const SafeErrorTestReact = withReactErrorBoundary()(ErrorTestReact);
 const getConfig = () => {
   const baseConfig = {
     appId: 'my-app',
-    version: '1.0.0'
+    version: '1.0.0',
   };
 
   if (process.env.NODE_ENV === 'development') {
@@ -135,7 +135,7 @@ const getConfig = () => {
       ...baseConfig,
       dsn: 'https://dev-server.com/collect',
       debug: true,
-      sampleRate: 1.0 // 开发环境全量采集
+      sampleRate: 1.0, // 开发环境全量采集
     };
   }
 
@@ -143,7 +143,7 @@ const getConfig = () => {
     ...baseConfig,
     dsn: 'https://prod-server.com/collect',
     debug: false,
-    sampleRate: 0.1 // 生产环境采样 10%
+    sampleRate: 0.1, // 生产环境采样 10%
   };
 };
 
@@ -168,4 +168,4 @@ function AppWithErrorBoundaries() {
   );
 }
 
-// 这样即使某个组件出错，其他组件仍然正常工作 
+// 这样即使某个组件出错，其他组件仍然正常工作

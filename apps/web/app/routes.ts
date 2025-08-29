@@ -8,13 +8,25 @@ export default [
     'projects/:projectId',
     'components/projects/[projectId]/log/layout.tsx',
     [
-      route('overview', 'components/projects/[projectId]/log/overview/page.tsx'),
-      route('errors-log', 'components/projects/[projectId]/log/errors-log/page.tsx'),
-      route('errors-log/:errorId', 'components/projects/[projectId]/log/errors-log/detail/page.tsx'),
-      route('performance', 'components/projects/[projectId]/log/performance/page.tsx'),
+      route(
+        'overview',
+        'components/projects/[projectId]/log/overview/page.tsx',
+      ),
+      route(
+        'errors-log',
+        'components/projects/[projectId]/log/errors-log/page.tsx',
+      ),
+      route(
+        'errors-log/:errorId',
+        'components/projects/[projectId]/log/errors-log/detail/page.tsx',
+      ),
+      route(
+        'performance',
+        'components/projects/[projectId]/log/performance/page.tsx',
+      ),
       route('users', 'components/projects/[projectId]/log/users/page.tsx'),
       route('custom', 'components/projects/[projectId]/log/custom/page.tsx'),
-    ]
+    ],
   ),
   route(
     'projects/:projectId/settings',

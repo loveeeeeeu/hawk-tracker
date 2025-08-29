@@ -32,7 +32,7 @@ import { ErrorPlugin } from '@hawk-tracker/plugin-error';
 const core = init({
   dsn: 'https://your-server.com/collect',
   appId: 'my-app',
-  version: '1.0.0'
+  version: '1.0.0',
 });
 
 // 安装错误插件
@@ -54,14 +54,14 @@ import { init } from '@hawk-tracker/core';
 init({
   dsn: 'https://your-server.com/collect',
   appId: 'my-app',
-  version: '1.0.0'
+  version: '1.0.0',
 });
 
 // 注册错误处理器（不传参，自动使用全局实例）
 Vue.config.errorHandler = createVueErrorHandler();
 
 new Vue({
-  render: h => h(App)
+  render: (h) => h(App),
 }).$mount('#app');
 ```
 
@@ -77,14 +77,14 @@ import { createVueErrorHandler } from '@hawk-tracker/plugin-error';
 const core = init({
   dsn: 'https://your-server.com/collect',
   appId: 'my-app',
-  version: '1.0.0'
+  version: '1.0.0',
 });
 
 // 注册错误处理器（传入 core 实例）
 Vue.config.errorHandler = createVueErrorHandler(core);
 
 new Vue({
-  render: h => h(App)
+  render: (h) => h(App),
 }).$mount('#app');
 ```
 
@@ -102,7 +102,7 @@ import { init } from '@hawk-tracker/core';
 init({
   dsn: 'https://your-server.com/collect',
   appId: 'my-app',
-  version: '1.0.0'
+  version: '1.0.0',
 });
 
 // 原始组件
@@ -140,7 +140,7 @@ import { withReactErrorBoundary } from '@hawk-tracker/plugin-error';
 const core = init({
   dsn: 'https://your-server.com/collect',
   appId: 'my-app',
-  version: '1.0.0'
+  version: '1.0.0',
 });
 
 function App() {
@@ -172,7 +172,7 @@ const errorPlugin = new ErrorPlugin({
   // 应用 ID
   appId: 'my-app',
   // 应用版本
-  version: '1.0.0'
+  version: '1.0.0',
 });
 
 core.use(errorPlugin);
@@ -183,12 +183,13 @@ core.use(errorPlugin);
 ```javascript
 // 根据环境调整配置
 const config = {
-  dsn: process.env.NODE_ENV === 'production' 
-    ? 'https://prod-server.com/collect'
-    : 'https://dev-server.com/collect',
+  dsn:
+    process.env.NODE_ENV === 'production'
+      ? 'https://prod-server.com/collect'
+      : 'https://dev-server.com/collect',
   appId: 'my-app',
   version: process.env.VUE_APP_VERSION || '1.0.0',
-  debug: process.env.NODE_ENV === 'development'
+  debug: process.env.NODE_ENV === 'development',
 };
 
 const core = init(config);
@@ -266,9 +267,9 @@ export default {
       } catch (error) {
         throw new Error('异步错误测试: ' + error.message);
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 ```
 
@@ -344,11 +345,12 @@ function App() {
 ```javascript
 // ✅ 推荐：根据环境调整配置
 const config = {
-  dsn: process.env.NODE_ENV === 'production' 
-    ? 'https://prod-server.com/collect'
-    : 'https://dev-server.com/collect',
+  dsn:
+    process.env.NODE_ENV === 'production'
+      ? 'https://prod-server.com/collect'
+      : 'https://dev-server.com/collect',
   debug: process.env.NODE_ENV === 'development',
-  sampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0
+  sampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
 };
 ```
 
@@ -361,6 +363,7 @@ A: 不会。错误处理器采用异步处理，不会阻塞主线程，且只�
 ### Q: 如何验证错误监控是否生效？
 
 A: 可以通过以下方式验证：
+
 1. 触发一个测试错误
 2. 查看浏览器开发者工具的 Network 标签页
 3. 检查是否向配置的服务器发送了请求
@@ -385,9 +388,11 @@ A: 默认情况下会收集页面 URL 和用户代理信息。如需保护隐私
 创建 Vue 错误处理器。
 
 **参数：**
+
 - `core?` (any): 监控核心实例，可选。如果不传，将使用全局实例。
 
 **返回值：**
+
 - `Function`: Vue 错误处理函数，可直接赋值给 `Vue.config.errorHandler`。
 
 ### withReactErrorBoundary(core?)
@@ -395,14 +400,17 @@ A: 默认情况下会收集页面 URL 和用户代理信息。如需保护隐私
 创建 React 错误边界包装器。
 
 **参数：**
+
 - `core?` (any): 监控核心实例，可选。如果不传，将使用全局实例。
 
 **返回值：**
+
 - `Function`: 高阶组件函数，接收组件作为参数，返回包装后的组件。
 
 ## 更新日志
 
 ### v1.0.0
+
 - 初始版本发布
 - 支持 Vue 错误捕获
 - 支持 React 错误边界

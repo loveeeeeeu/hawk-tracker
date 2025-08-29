@@ -1,7 +1,10 @@
 import { BasePlugin, SEND_TYPES } from '@hawk-tracker/core';
 import { record } from 'rrweb';
 
-type RecordOptions = Omit<NonNullable<Parameters<typeof record>[0]>, 'emit' | 'sampling'>;
+type RecordOptions = Omit<
+  NonNullable<Parameters<typeof record>[0]>,
+  'emit' | 'sampling'
+>;
 
 type PresetName = 'privacy' | 'balanced' | 'quality';
 
@@ -39,7 +42,7 @@ type InternalOptions = {
 
 /**
  * rrweb 录屏插件
- * 用于集成 rrweb 录屏能力到 hawk-tracker 
+ * 用于集成 rrweb 录屏能力到 hawk-tracker
  */
 export class RrwebPlugin extends BasePlugin {
   /**
