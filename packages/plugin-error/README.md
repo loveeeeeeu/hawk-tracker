@@ -415,3 +415,107 @@ A: 默认情况下会收集页面 URL 和用户代理信息。如需保护隐私
 - 支持 Vue 错误捕获
 - 支持 React 错误边界
 - 支持全局实例和传参两种方式
+
+## 中文使用说明与接口文档（新增）
+
+### 安装与初始化
+
+```ts
+import { init } from '@hawk-tracker/core';
+import { ErrorPlugin } from '@hawk-tracker/plugin-error';
+
+const core = init({
+  dsn: 'https://your-server.com/collect',
+  appName: 'my-app',
+  debug: true,
+});
+
+core.use(ErrorPlugin, {
+  // 行为快照
+  behaviorStackName: 'user_behavior',
+  behaviorSnapshotCount: 50,
+  // rrweb 快照（需配合 @hawk-tracker/plugin-rrweb 使用）
+  attachRrweb: true,
+  rrwebMaxSize: 300,
+  rrwebMaxBytes: 64 * 1024, // 录屏JSON近似字节上限
+  // 去重与断路器
+  dedupeWindowMs: 3000,
+  maxConsecutiveFailures: 3,
+  circuitOpenMs: 5000,
+});
+```
+
+### 事件来源
+
+- window.onerror：运行时错误、资源加载错误
+- unhandledrejection：未处理 Promise 拒绝
+- console.error：控制台错误日志
+- fetch / XHR：网络错误/异常（状态码 >= 400、超时、网络错误）
+
+### 采集数据结构（摘要）
+
+```ts
+interface NormalizedErrorData {
+  message?: string;
+  name?: string;
+  stack?: string;
+  // 资源错误
+  resource?: { tag?: string; url?: string; outerHTML?: string };
+  // HTTP 错误
+  http?: {
+    url?: string;
+    method?: string;
+    status?: number;
+    statusText?: string;
+    durationMs?: number;
+  };
+  // 上下文
+  pageUrl?: string;
+  userAgent?: string;
+  behaviorSnapshot?: any[];
+  rrwebSnapshot?: any; // 结合 rrweb 插件获取
+  errorContext?: any; // rrweb 错误点附近上下文
+  release?: { appId?: string; version?: string };
+}
+```
+
+### 配置项（新增能力）
+
+- behaviorStackName: string = 'user_behavior'：行为栈名称
+- behaviorSnapshotCount: number = 50：附带的行为快照数量
+- attachRrweb: boolean = true：是否尝试附带 rrweb 录屏片段
+- rrwebMaxSize: number = 200：录屏事件数量上限（越大越细）
+- rrwebMaxBytes: number = 65536：录屏JSON近似字节上限（超过将自动裁剪，优先保留最近事件）
+- dedupeWindowMs: number = 3000：短时间窗口内相同错误指纹去重
+- maxConsecutiveFailures: number = 3：上报连续失败次数阈值，达到则短期开启断路器
+- circuitOpenMs: number = 5000：断路器打开时长（毫秒）
+
+### 循环报错与自我上报屏蔽
+
+插件内部对自身上报路径进行屏蔽，避免 SDK 上报流程的异常再次触发错误监听，导致“上报-报错-再上报”的循环。
+
+### 指纹与去重策略
+
+- 资源错误：`res|<tag>|<url(without query/hash)>`
+- HTTP 错误：`http|<method>|<url模板化>|<status>`
+- 运行时/Promise/Console：`rt|<name>|<message前200>|<stackTop>|<page>`
+  短窗（`dedupeWindowMs`）内相同指纹将被丢弃。
+
+### 搭配 rrweb 插件
+
+为获得错误发生前后的可回放片段，请在应用启动时安装 rrweb 插件：
+
+```ts
+import { RrwebPlugin } from '@hawk-tracker/plugin-rrweb';
+
+core.use(RrwebPlugin, {
+  preset: 'balanced', // 'privacy' | 'balanced' | 'quality'
+  maxEvents: 300,
+});
+```
+
+### 最佳实践建议
+
+- 生产环境降低 `rrwebMaxSize` 与 `rrwebMaxBytes`，结合采样率降低压力
+- 后端对 `type=error` 开启专用限流与告警阈值
+- 对跨域脚本错误（Script error）做过滤，避免噪音

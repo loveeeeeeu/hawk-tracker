@@ -1,4 +1,4 @@
-import { BasePlugin, SEND_TYPES, SEND_SUB_TYPES } from '@hawk-tracker/core';
+import { BasePlugin, SEND_TYPES } from '@hawk-tracker/core';
 import { record } from 'rrweb';
 
 type RecordOptions = Omit<
@@ -9,7 +9,7 @@ type RecordOptions = Omit<
 type PresetName = 'privacy' | 'balanced' | 'quality';
 
 /**
- * rrweb 插件配置项
+ * rrweb 插件配置项（已去除自动上报相关配置）
  */
 type RrwebPluginOptions = {
   maxEvents?: number;
@@ -17,20 +17,15 @@ type RrwebPluginOptions = {
   emit?: (event: any) => void;
   preset?: PresetName;
   recordOptions?: RecordOptions;
-  /** 批量大小，达到后立刻上报 */
-  flushBatchSize?: number;
-  /** 定时上报间隔（毫秒） */
-  flushIntervalMs?: number;
 };
 
+/** 内部配置 */
 type InternalOptions = {
   preset: PresetName;
   maxEvents: number;
   sampling: NonNullable<Parameters<typeof record>[0]>['sampling'];
   recordOptions: RecordOptions;
   emit: (event: any) => void;
-  flushBatchSize: number;
-  flushIntervalMs: number;
 };
 
 /**
@@ -48,11 +43,6 @@ export class RrwebPlugin extends BasePlugin {
     eventIndex: number;
   }> = [];
   private currentEventIndex: number = 0;
-
-  // 自动上报相关
-  private core: any | null = null;
-  private buffer: any[] = [];
-  private flushTimer: any = null;
 
   constructor(options: RrwebPluginOptions = {}) {
     super(SEND_TYPES.RRWEB);
@@ -77,14 +67,11 @@ export class RrwebPlugin extends BasePlugin {
       sampling: mergedSampling,
       recordOptions: mergedRecordOptions,
       emit: options.emit ?? (() => {}),
-      flushBatchSize: options.flushBatchSize ?? 100,
-      flushIntervalMs: options.flushIntervalMs ?? 5000,
     };
   }
 
-  /** 安装插件，启动 rrweb 录制，并接入自动上报 */
-  install(core: any): void {
-    this.core = core;
+  /** 安装插件，启动 rrweb 录制（不再进行任何自动上报） */
+  install(_core: any): void {
     if (typeof window === 'undefined') return;
     if (this.stopFn) return;
 
@@ -107,19 +94,9 @@ export class RrwebPlugin extends BasePlugin {
         }
         // 自定义回调
         this.options.emit(e);
-        // 加入上报缓冲
-        this.buffer.push(e);
-        if (this.buffer.length >= this.options.flushBatchSize) {
-          this.flush(false);
-        }
       },
     });
     if (stop) this.stopFn = stop;
-
-    // 定时器
-    if (!this.flushTimer) {
-      this.flushTimer = setInterval(() => this.flush(false), this.options.flushIntervalMs);
-    }
 
     // 全局调试 API（新）
     (window as any).__hawk_rrweb = {
@@ -149,16 +126,38 @@ export class RrwebPlugin extends BasePlugin {
 
     // 全局调试 API（旧，向后兼容给错误插件使用）
     (window as any).$hawkRrweb = {
-      getReplay: ({ maxSize = this.options.maxEvents } = {}) => {
+      getReplay: ({
+        maxSize = this.options.maxEvents,
+        maxBytes,
+      }: { maxSize?: number; maxBytes?: number } = {}) => {
         const size = Math.min(maxSize, this.events.length);
-        return this.events.slice(this.events.length - size);
+        let slice = this.events.slice(this.events.length - size);
+        if (typeof maxBytes === 'number' && maxBytes > 0) {
+          // 粗略基于 JSON 字节长度的裁剪（UTF-8 近似）
+          let json = '';
+          while (slice.length > 0) {
+            json = JSON.stringify(slice);
+            const bytes = new TextEncoder().encode(json).length;
+            if (bytes <= maxBytes) break;
+            // 移除最早的 10% 或至少 1 条，优先保留最近事件
+            const drop = Math.max(1, Math.floor(slice.length * 0.1));
+            slice = slice.slice(drop);
+          }
+        }
+        return slice;
       },
       getErrorContext: (_: any) => {
         // 简化的错误上下文：取错误点附近的片段
         const last = this.errorPoints.at(-1);
         if (!last) return null;
-        const before = this.events.slice(Math.max(0, last.eventIndex - 20), last.eventIndex);
-        const after = this.events.slice(last.eventIndex, Math.min(this.events.length, last.eventIndex + 10));
+        const before = this.events.slice(
+          Math.max(0, last.eventIndex - 20),
+          last.eventIndex,
+        );
+        const after = this.events.slice(
+          last.eventIndex,
+          Math.min(this.events.length, last.eventIndex + 10),
+        );
         return {
           errorPoint: last,
           eventsBeforeError: before,
@@ -167,37 +166,22 @@ export class RrwebPlugin extends BasePlugin {
           errorCount: this.errorPoints.length,
         };
       },
-      markErrorPoint: (info: { type: string; error: any; timestamp?: number }) => {
+      markErrorPoint: (info: {
+        type: string;
+        error: any;
+        timestamp?: number;
+      }) => {
         (window as any).__hawk_rrweb.markErrorPoint(info);
       },
     };
   }
 
-  /** 立刻停止录制并上报剩余缓冲 */
+  /** 仅停止录制（不做自动上报） */
   public stop(): void {
-    if (this.flushTimer) {
-      clearInterval(this.flushTimer);
-      this.flushTimer = null;
-    }
-    this.flush(true);
     if (this.stopFn) {
       this.stopFn();
       this.stopFn = null;
     }
-  }
-
-  /** 批量上报缓冲事件 */
-  private flush(isImmediate: boolean) {
-    if (!this.core || this.buffer.length === 0) return;
-    const batch = this.buffer.splice(0, this.options.flushBatchSize);
-    try {
-      this.core.dataSender.sendData(
-        SEND_TYPES.RRWEB,
-        SEND_SUB_TYPES.RRWEB,
-        { data: { events: batch } },
-        isImmediate,
-      );
-    } catch {}
   }
 
   private getPreset(preset?: PresetName): {
@@ -206,7 +190,10 @@ export class RrwebPlugin extends BasePlugin {
     recordOptions: RecordOptions;
     maxEvents: number;
   } {
-    const pres: Record<PresetName, { sampling: any; recordOptions: RecordOptions; maxEvents: number }> = {
+    const pres: Record<
+      PresetName,
+      { sampling: any; recordOptions: RecordOptions; maxEvents: number }
+    > = {
       privacy: {
         sampling: { mousemove: 80, scroll: 80, input: 'last', media: 80 },
         recordOptions: { maskAllInputs: true, recordCanvas: false } as any,
@@ -225,6 +212,11 @@ export class RrwebPlugin extends BasePlugin {
     };
     const name: PresetName = preset ?? 'balanced';
     const cfg = pres[name];
-    return { name, sampling: cfg.sampling, recordOptions: cfg.recordOptions, maxEvents: cfg.maxEvents };
+    return {
+      name,
+      sampling: cfg.sampling,
+      recordOptions: cfg.recordOptions,
+      maxEvents: cfg.maxEvents,
+    };
   }
 }

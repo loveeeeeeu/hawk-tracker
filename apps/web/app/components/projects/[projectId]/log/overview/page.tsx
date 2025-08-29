@@ -1,11 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { MockAPI, Project, ProjectOverview } from '../../../../../api/mockAPI';
+
+// 监控数据接口
+interface MonitorStats {
+  events: number;
+  errors: number;
+  performance: number;
+  behaviors: number;
+  total: number;
+}
+
+interface MonitorData {
+  list: any[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
 export default function ProjectOverviewPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const [project, setProject] = useState<Project | null>(null);
-  const [overview, setOverview] = useState<ProjectOverview | null>(null);
+  const [stats, setStats] = useState<MonitorStats | null>(null);
+  const [recentData, setRecentData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -13,21 +29,28 @@ export default function ProjectOverviewPage() {
       if (!projectId) return;
       
       try {
-        const [projectData, overviewData] = await Promise.all([
-          MockAPI.getProject(projectId),
-          MockAPI.getProjectOverview(projectId)
-        ]);
+        // 获取统计数据
+        const statsResponse = await fetch('http://localhost:3001/api/stats');
+        const statsData = await statsResponse.json();
         
-        setProject(projectData);
-        setOverview(overviewData);
+        // 获取最近的数据
+        const dataResponse = await fetch('http://localhost:3001/api/data?limit=10');
+        const dataResult = await dataResponse.json();
+        
+        setStats(statsData.data);
+        setRecentData(dataResult.data.list || []);
       } catch (error) {
-        console.error('获取项目概览数据失败:', error);
+        console.error('获取监控数据失败:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
+    
+    // 每30秒刷新一次数据
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
   }, [projectId]);
 
   if (isLoading) {
@@ -59,14 +82,14 @@ export default function ProjectOverviewPage() {
           <li>
             <div className="flex items-center">
               <span className="mx-2 text-gray-400">/</span>
-              <span className="text-gray-900 font-medium">项目概览</span>
+              <span className="text-gray-900 font-medium">监控概览</span>
             </div>
           </li>
         </ol>
       </nav>
 
       {/* 页面标题 */}
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">项目概览</h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">监控概览</h1>
 
       {/* 关键指标 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -78,22 +101,8 @@ export default function ProjectOverviewPage() {
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">今日错误</p>
-              <p className="text-2xl font-semibold text-gray-900">{overview?.errorsToday || 0}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-orange-100 rounded-md flex items-center justify-center">
-                <span className="text-orange-600 text-lg">👥</span>
-              </div>
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">影响用户</p>
-              <p className="text-2xl font-semibold text-gray-900">{overview?.affectedUsers || 0}</p>
+              <p className="text-sm font-medium text-gray-500">错误数量</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats?.errors || 0}</p>
             </div>
           </div>
         </div>
@@ -106,8 +115,8 @@ export default function ProjectOverviewPage() {
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">平均响应时间</p>
-              <p className="text-2xl font-semibold text-gray-900">{overview?.averageResponseTime || 0}ms</p>
+              <p className="text-sm font-medium text-gray-500">性能数据</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats?.performance || 0}</p>
             </div>
           </div>
         </div>
@@ -116,14 +125,78 @@ export default function ProjectOverviewPage() {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <div className="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center">
-                <span className="text-green-600 text-lg">🟢</span>
+                <span className="text-green-600 text-lg">🎯</span>
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">在线用户</p>
-              <p className="text-2xl font-semibold text-gray-900">{overview?.onlineUsers || 0}</p>
+              <p className="text-sm font-medium text-gray-500">用户行为</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats?.behaviors || 0}</p>
             </div>
           </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-purple-100 rounded-md flex items-center justify-center">
+                <span className="text-purple-600 text-lg">📊</span>
+              </div>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">总数据量</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats?.total || 0}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 最近数据 */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">最近数据</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  类型
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  时间
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  页面
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  详情
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {recentData.map((item, index) => (
+                <tr key={index}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      item.type === 'error' ? 'bg-red-100 text-red-800' :
+                      item.type === 'performance' ? 'bg-blue-100 text-blue-800' :
+                      item.type === 'behavior' ? 'bg-green-100 text-green-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {item.type || 'event'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {new Date(item.receivedAt || item.timestamp).toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {item.page || item.pageUrl || 'unknown'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {item.errorMessage || item.eventName || item.message || '无详情'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 

@@ -6,6 +6,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import { useEffect } from "react";
 
 // import type { Route } from "./+types/root";
 import "./app.css";
@@ -13,7 +14,7 @@ import "./app.css";
 import { Route } from ".react-router/types/app/+types/root";
 
 import { AuthProvider } from "./contexts/AuthContext";
-
+import { initMonitor } from "./monitor";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -29,6 +30,11 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export default function App() {
+  // 初始化监控
+  useEffect(() => {
+    initMonitor();
+  }, []);
+
   return (
     <html lang="zh-CN">
       <head>

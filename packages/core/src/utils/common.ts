@@ -187,14 +187,14 @@ export function getElementPath(element: Element): string {
 
   while (current && current !== document.body) {
     let selector = current.tagName.toLowerCase();
-    
+
     if (current.id) {
       selector += `#${current.id}`;
     } else if (current.className) {
       const classes = Array.from(current.classList).join('.');
       selector += `.${classes}`;
     }
-    
+
     path.unshift(selector);
     current = current.parentElement;
   }
@@ -208,10 +208,13 @@ export function getElementPath(element: Element): string {
  * @param attributes 要提取的属性名列表
  * @returns 提取的属性对象
  */
-export function extractCustomAttributes(element: Element, attributes: string[]): Record<string, any> {
+export function extractCustomAttributes(
+  element: Element,
+  attributes: string[],
+): Record<string, any> {
   const params: Record<string, any> = {};
 
-  attributes.forEach(attr => {
+  attributes.forEach((attr) => {
     const value = element.getAttribute(`data-tracking-${attr}`);
     if (value !== null) {
       params[attr] = value;
@@ -227,12 +230,15 @@ export function extractCustomAttributes(element: Element, attributes: string[]):
  * @param ignoreSelectors 忽略的选择器列表
  * @returns 是否应该忽略
  */
-export function isElementIgnored(element: Element, ignoreSelectors: string[]): boolean {
+export function isElementIgnored(
+  element: Element,
+  ignoreSelectors: string[],
+): boolean {
   if (!ignoreSelectors || ignoreSelectors.length === 0) {
     return false;
   }
 
-  return ignoreSelectors.some(selector => {
+  return ignoreSelectors.some((selector) => {
     try {
       return element.matches(selector);
     } catch (error) {
@@ -264,10 +270,12 @@ export function findTrackingElement(element: Element): Element | null {
  * @param element 目标元素
  * @returns 提取的属性对象
  */
-export function extractAllTrackingAttributes(element: Element): Record<string, string> {
+export function extractAllTrackingAttributes(
+  element: Element,
+): Record<string, string> {
   const attributes: Record<string, string> = {};
-  
-  Array.from(element.attributes).forEach(attr => {
+
+  Array.from(element.attributes).forEach((attr) => {
     if (attr.name.startsWith('data-tracking-')) {
       const key = attr.name.replace('data-tracking-', '');
       attributes[key] = attr.value;

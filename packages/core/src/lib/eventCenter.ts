@@ -49,7 +49,6 @@ export class EventCenter {
     this.runEvent(type, ...args);
   }
 
-
   /**
    * 点击事件总线
    */
@@ -75,7 +74,7 @@ export class EventCenter {
   emitClickEvent(event: string, data?: any): void {
     const callbacks = this.clickEventBus.get(event);
     if (callbacks) {
-      callbacks.forEach(callback => {
+      callbacks.forEach((callback) => {
         try {
           callback(data);
         } catch (error) {
@@ -104,7 +103,6 @@ export class EventCenter {
       }
     }
   }
-
 }
 
 export const eventCenter = new EventCenter();

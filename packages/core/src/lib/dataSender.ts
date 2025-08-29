@@ -36,6 +36,10 @@ interface SenderConfig {
   cacheMaxLength?: number;
   cacheWaitingTime?: number;
   appName?: string; // 添加应用名称
+  // 新增：速率与断路器
+  rateLimitPerSec?: number; // 每秒最大发送批次
+  circuitOpenMs?: number; // 断路器打开时长
+  maxConsecutiveTransportFailures?: number; // 连续传输失败阈值
 }
 
 export class DataSender {
@@ -55,6 +59,12 @@ export class DataSender {
   ) => void;
   // 新增：重试定时器
   private retryTimer: number | null = null;
+  // 新增：速率限制计数
+  private sentBatchesInCurrentSecond = 0;
+  private secondWindowStart = 0;
+  // 新增：断路器状态
+  private consecutiveTransportFailures = 0;
+  private circuitOpenUntil = 0;
 
   constructor(config: SenderConfig) {
     // 设置默认配置并合并
@@ -70,10 +80,15 @@ export class DataSender {
       maxRetry: config.maxRetry ?? 5,
       backoffBaseMs: config.backoffBaseMs ?? 1000,
       backoffMaxMs: config.backoffMaxMs ?? 30000,
-        // 新增配置项
+      // 新增配置项
       cacheMaxLength: config.cacheMaxLength ?? 10,
       cacheWaitingTime: config.cacheWaitingTime ?? 100,
       appName: config.appName ?? 'unknown-app',
+      // 新增：速率与断路器
+      rateLimitPerSec: config.rateLimitPerSec ?? 5,
+      circuitOpenMs: config.circuitOpenMs ?? 5000,
+      maxConsecutiveTransportFailures:
+        config.maxConsecutiveTransportFailures ?? 3,
     } as Required<SenderConfig>;
 
     if (this.config.debug) {
@@ -152,12 +167,21 @@ export class DataSender {
         return;
       }
 
+      // 速率限制窗口
+      const now = Date.now();
+      if (now - this.secondWindowStart >= 1000) {
+        this.secondWindowStart = now;
+        this.sentBatchesInCurrentSecond = 0;
+      }
+      if (this.sentBatchesInCurrentSecond >= this.config.rateLimitPerSec) {
+        this.log('warn', 'Rate limit reached for this second, delaying.');
+        return;
+      }
+
       // 在浏览器空闲时触发上报，最大化性能
-      // requestIdleCallback 仅在浏览器有空闲时间时才会执行
       if ('requestIdleCallback' in window) {
         (window as any).requestIdleCallback(() => this.flush());
       } else {
-        // 如果不支持，则直接执行
         this.flush();
       }
     };
@@ -176,6 +200,12 @@ export class DataSender {
       return;
     }
 
+    // 断路器：如果打开则直接返回
+    if (Date.now() < this.circuitOpenUntil) {
+      this.log('warn', 'Circuit breaker open, skipping flush.');
+      return;
+    }
+
     // 队列为空，无需操作
     if (this.queue.length === 0) {
       return;
@@ -188,6 +218,7 @@ export class DataSender {
       baseInfo: { ...this.getBaseInfo(), sendTime: Date.now() },
     };
     this.concurrentRequests++;
+    this.sentBatchesInCurrentSecond++;
     this.log(
       'info',
       `Flushing ${dataToSend.length} items from queue. Concurrent requests: ${this.concurrentRequests}`,
@@ -196,6 +227,7 @@ export class DataSender {
     try {
       await this.transport(finalData);
       this.log('info', `Successfully sent ${dataToSend.length} items.`);
+      this.consecutiveTransportFailures = 0; // 传输成功，重置失败计数
       // 成功：如果还有数据，继续快速冲队列
       if (this.queue.length > 0) {
         this.flush();
@@ -228,6 +260,17 @@ export class DataSender {
 
       if (toRetry.length > 0) {
         this.queue.unshift(...toRetry);
+      }
+
+      this.consecutiveTransportFailures++;
+      if (
+        this.consecutiveTransportFailures >=
+        this.config.maxConsecutiveTransportFailures
+      ) {
+        // 打开断路器一段时间
+        this.circuitOpenUntil = Date.now() + this.config.circuitOpenMs;
+        this.consecutiveTransportFailures = 0;
+        this.log('warn', `Circuit opened for ${this.config.circuitOpenMs}ms.`);
       }
 
       // 离线则等待 online 事件再触发
@@ -291,6 +334,7 @@ export class DataSender {
         headers: {
           'Content-Type': 'application/json',
           'Content-Encoding': 'gzip',
+          'X-Hawk-SDK': '1', // 标记为 SDK 上报
         },
         body: compressedPayload as any,
       });
@@ -386,7 +430,6 @@ export class DataSender {
       // 这里可以放置会话 ID 或其他客户端信息
     };
   }
-  
 
   /**
    * 点击事件缓存
@@ -441,7 +484,7 @@ export class DataSender {
       });
 
       const success = response.ok;
-      
+
       if (this.config.debug) {
         console.log('Click tracking data sent:', { success, events });
       }

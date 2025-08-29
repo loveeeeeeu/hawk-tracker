@@ -50,7 +50,18 @@ export class ErrorPlugin extends BasePlugin {
     rrwebMaxSize?: number;
     appId?: string;
     version?: string;
+    dedupeWindowMs?: number; // 新增：短窗去重时间窗口
+    rrwebMaxBytes?: number; // 新增：录屏最大字节限制（近似）
+    maxConsecutiveFailures?: number; // 断路器阈值
+    circuitOpenMs?: number; // 断路器打开时长
   };
+  // 新增：短窗去重存储
+  private recentFingerprints: Map<string, number> = new Map();
+  // 新增：自我上报屏蔽（避免SDK-自身-报错-循环）
+  private isSelfReporting = false;
+  // 新增：断路器状态
+  private consecutiveFailures = 0;
+  private circuitOpenUntil = 0;
 
   constructor(options: Partial<ErrorPlugin['options']> = {}) {
     super(SEND_TYPES.ERROR);
@@ -59,14 +70,44 @@ export class ErrorPlugin extends BasePlugin {
       behaviorSnapshotCount: 50,
       attachRrweb: true,
       rrwebMaxSize: 200, // 限制录屏事件数量，避免体积过大
+      rrwebMaxBytes: 64 * 1024, // 64KB 近似上限
       appId: undefined,
       version: undefined,
+      dedupeWindowMs: 3000,
+      maxConsecutiveFailures: 3,
+      circuitOpenMs: 5000,
       ...options,
     };
   }
 
   install(core: any, _options?: any) {
     const { eventCenter, dataSender } = core;
+
+    const trySend = async (
+      subType: SEND_SUB_TYPES | string,
+      payload: NormalizedErrorData,
+      immediate: boolean,
+    ) => {
+      if (!this.shouldSend(subType, payload)) return;
+      if (this.isSelfReporting) return; // 自身上报中，直接丢弃，避免循环
+      if (Date.now() < this.circuitOpenUntil) return; // 断路器打开中，丢弃
+      try {
+        this.isSelfReporting = true;
+        dataSender.sendData(SEND_TYPES.ERROR, subType, payload, immediate);
+        this.consecutiveFailures = 0; // 视为投递请求已入队成功
+      } catch (_) {
+        this.consecutiveFailures++;
+        if (
+          this.consecutiveFailures >= (this.options.maxConsecutiveFailures || 3)
+        ) {
+          this.circuitOpenUntil =
+            Date.now() + (this.options.circuitOpenMs || 5000);
+          this.consecutiveFailures = 0;
+        }
+      } finally {
+        this.isSelfReporting = false;
+      }
+    };
 
     // window.onerror 捕获：代码错误 + 资源加载错误
     eventCenter.subscribeEvent({
@@ -77,7 +118,7 @@ export class ErrorPlugin extends BasePlugin {
         const subType = payload.resource
           ? SEND_SUB_TYPES.RESOURCE
           : SEND_SUB_TYPES.ERROR;
-        dataSender.sendData(SEND_TYPES.ERROR, subType, payload, true);
+        trySend(subType, payload, true);
       },
     });
 
@@ -86,16 +127,12 @@ export class ErrorPlugin extends BasePlugin {
       type: LISTEN_TYPES.UNHANDLEDREJECTION,
       callback: (event: PromiseRejectionEvent) => {
         const payload = this.handleUnhandledRejection(event, core);
-        dataSender.sendData(
-          SEND_TYPES.ERROR,
-          SEND_SUB_TYPES.UNHANDLEDREJECTION,
-          payload,
-          true,
-        );
+        const subType = SEND_SUB_TYPES.UNHANDLEDREJECTION;
+        trySend(subType, payload, true);
       },
     });
 
-    // console.error 捕获（可辅助定位开发期错误）
+    // console.error 捕获
     eventCenter.subscribeEvent({
       type: LISTEN_TYPES.CONSOLEERROR,
       callback: (args: any[]) => {
@@ -107,12 +144,8 @@ export class ErrorPlugin extends BasePlugin {
             message: message || 'console.error',
             name: 'ConsoleError',
           });
-          dataSender.sendData(
-            SEND_TYPES.ERROR,
-            SEND_SUB_TYPES.CONSOLEERROR,
-            payload,
-            false,
-          );
+          const subType = SEND_SUB_TYPES.CONSOLEERROR;
+          trySend(subType, payload, false);
         } catch {}
       },
     });
@@ -123,12 +156,8 @@ export class ErrorPlugin extends BasePlugin {
       callback: (info: any) => {
         const payload = this.handleFetch(info, core);
         if (!payload) return;
-        dataSender.sendData(
-          SEND_TYPES.ERROR,
-          SEND_SUB_TYPES.FETCH,
-          payload,
-          true,
-        );
+        const subType = SEND_SUB_TYPES.FETCH;
+        trySend(subType, payload, true);
       },
     });
 
@@ -180,12 +209,8 @@ export class ErrorPlugin extends BasePlugin {
               message: `[XHR ${meta.method}] ${meta.url} -> ${status} ${statusText}`,
               name: 'XMLHttpRequestError',
             });
-            core.dataSender.sendData(
-              SEND_TYPES.ERROR,
-              SEND_SUB_TYPES.XHR,
-              payload,
-              true,
-            );
+            const subType = SEND_SUB_TYPES.XHR;
+            trySend(subType, payload, true);
           };
 
           xhr.addEventListener('loadend', () => finalize('loadend'));
@@ -194,6 +219,94 @@ export class ErrorPlugin extends BasePlugin {
         } catch {}
       },
     });
+  }
+
+  // 生成错误指纹（尽量稳定，避免动态因素）
+  private computeFingerprint(
+    subType: SEND_SUB_TYPES | string,
+    payload: NormalizedErrorData,
+  ): string {
+    try {
+      const pageUrl = (payload.pageUrl || '').split('?')[0] || '';
+
+      // 资源错误：tag + url（去query/hash）
+      if (subType === SEND_SUB_TYPES.RESOURCE || payload.resource) {
+        const tag = payload.resource?.tag || '';
+        const rawResUrl = String(payload.resource?.url || '');
+        const withoutQuery = rawResUrl.split('?')[0] || '';
+        const url = withoutQuery.split('#')[0] || '';
+        return `res|${tag}|${url}`;
+      }
+
+      // HTTP 错误：method + url（去query/hash模板化） + status
+      if (payload.http) {
+        const http = payload.http as {
+          url?: string;
+          method?: string;
+          status?: number;
+        };
+        const method = (http?.method || 'GET').toUpperCase();
+        const rawUrl = String(http?.url || '');
+        const withoutQuery = rawUrl.split('?')[0] || '';
+        const withoutHash = withoutQuery.split('#')[0] || '';
+        const url = withoutHash
+          // 简单模板化：/123/ -> /:id/
+          .replace(/\/(\d{3,})\//g, '/:id/')
+          .replace(/=[0-9a-fA-F-]{8,}/g, '=*');
+        const status = http?.status || 0;
+        return `http|${method}|${url}|${status}`;
+      }
+
+      // 运行时/Promise/Console：name + message + stackTop
+      const name = payload.name || '';
+      const message = (payload.message || '').slice(0, 200);
+      const stackTop = this.getStackTop(payload.stack);
+      return `rt|${name}|${message}|${stackTop}|${pageUrl}`;
+    } catch {
+      return JSON.stringify({ subType, payload });
+    }
+  }
+
+  private getStackTop(stack?: string) {
+    if (!stack) return '';
+    try {
+      const lines = stack.split('\n').map((s) => s.trim());
+      // 取第一条包含 at/（) 的栈帧，去掉行列号
+      const firstLine =
+        lines.find((l) => /at\s+/.test(l) || /\(/.test(l)) || lines[0] || '';
+      return firstLine
+        .replace(/:\d+:\d+\)?$/, '')
+        .replace(/\(.*?\)/, '(*)')
+        .replace(/https?:\/\/[^\s)]+/g, 'url');
+    } catch {
+      return '';
+    }
+  }
+
+  private shouldSend(
+    subType: SEND_SUB_TYPES | string,
+    payload: NormalizedErrorData,
+  ): boolean {
+    try {
+      const key = this.computeFingerprint(subType, payload);
+      const now = Date.now();
+      const win = this.options.dedupeWindowMs ?? 3000;
+      const last = this.recentFingerprints.get(key) || 0;
+      if (now - last < win) {
+        return false;
+      }
+      this.recentFingerprints.set(key, now);
+      // 清理过期项（轻量）
+      if (this.recentFingerprints.size > 2000) {
+        const threshold = now - win * 2;
+        for (const [k, v] of this.recentFingerprints) {
+          if (v < threshold) this.recentFingerprints.delete(k);
+        }
+      }
+      return true;
+    } catch {
+      return true;
+    }
   }
 
   private handleWindowError(event: any, core: any): NormalizedErrorData | null {
@@ -331,29 +444,33 @@ export class ErrorPlugin extends BasePlugin {
     // 改进：主动关联录屏和错误
     let rrwebSnapshot: any | undefined;
     let errorContext: any = undefined;
-    
+
     if (this.options.attachRrweb) {
       try {
         const api = (window as any)?.$hawkRrweb;
         if (api && typeof api.getReplay === 'function') {
-          // 获取最近的录屏事件
-          rrwebSnapshot = api.getReplay({ maxSize: this.options.rrwebMaxSize });
-          
+          const bytesLimit = this.options.rrwebMaxBytes || 64 * 1024;
+          // 获取最近的录屏事件，带字节上限
+          rrwebSnapshot = api.getReplay({
+            maxSize: this.options.rrwebMaxSize,
+            maxBytes: bytesLimit,
+          });
+
           // 新增：获取错误发生时的上下文信息
           if (api.getErrorContext) {
             errorContext = api.getErrorContext({
               errorType: base.name,
               errorMessage: base.message,
-              timestamp: Date.now()
+              timestamp: Date.now(),
             });
           }
-          
+
           // 新增：标记错误发生的时间点
           if (api.markErrorPoint) {
             api.markErrorPoint({
               type: 'error',
               error: base,
-              timestamp: Date.now()
+              timestamp: Date.now(),
             });
           }
         }

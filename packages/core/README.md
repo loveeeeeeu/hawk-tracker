@@ -400,3 +400,87 @@ Hawk Tracker Core 的行为栈系统提供了一个强大、灵活、易用的�
 - ✅ 调试友好
 
 这个设计既满足了当前的需求，又为未来的扩展留下了充足的空间。
+
+## 核心接口与配置说明（中文新增）
+
+### 初始化
+
+```ts
+import { init } from '@hawk-tracker/core';
+
+const tracker = init({
+  dsn: 'https://your-endpoint/api/track',
+  appName: 'your-app',
+  debug: process.env.NODE_ENV !== 'production',
+  sampleRate: 1.0,
+  batchSize: 50,
+  sendInterval: 5000,
+  maxConcurrentRequests: 3,
+  maxRetry: 5,
+  backoffBaseMs: 1000,
+  backoffMaxMs: 30000,
+  offlineStorageKey: 'sdk_report_queue',
+  // 新增：速率与断路器
+  rateLimitPerSec: 5,
+  circuitOpenMs: 5000,
+  maxConsecutiveTransportFailures: 3,
+  behavior: {
+    core: true,
+    maxSize: 200,
+    maxAge: 5 * 60 * 1000,
+    debug: false,
+  },
+});
+```
+
+### HawkTracker 公开方法
+
+- use(Plugin, options): 注册插件
+- track(type, data, isImmediate?): 自定义数据上报
+- getBehaviorStack(name='default'): 获取行为栈
+- createBehaviorStack(name, config?): 创建行为栈
+- getOrCreateBehaviorStack(name, config?): 获取或创建行为栈
+- pushBehavior(event, stackName='user_behavior'): 便捷推入行为
+- getBehaviors(options, stackName='user_behavior'): 获取行为快照
+- clearBehaviors(stackName='user_behavior'): 清空栈
+
+### DataSender 关键配置
+
+- dsn: 上报地址
+- sampleRate: 采样率（0-1），非紧急数据会按采样丢弃
+- batchSize: 批量大小；sendInterval: 批量周期
+- maxConcurrentRequests: 并发度
+- maxRetry: 最大重试；backoffBaseMs/backoffMaxMs: 指数退避参数
+- rateLimitPerSec（新增）: 每秒最大发送批次数
+- maxConsecutiveTransportFailures / circuitOpenMs（新增）: 传输失败断路器
+- offlineStorageKey: 离线保存队列的 key，离线/卸载时保存，在线恢复时回放
+
+### 行为栈接口（要点）
+
+- addEvent / addCustomEvent
+- getSnapshot({ maxCount, startTime, endTime, includeTypes, excludeTypes })
+- getStats() / clear() / destroy()
+
+### 插件集成建议
+
+- 录屏：`@hawk-tracker/plugin-rrweb`，使用 `preset: 'balanced'` 与 `maxBytes = 64KB`
+- 错误：`@hawk-tracker/plugin-error`，启用 `dedupeWindowMs=3000`、`rrwebMaxBytes=64KB`、断路器默认
+- 性能：`@hawk-tracker/plugin-performance`，生产 `sampleRate=0.1~0.3`
+- 行为：`@hawk-tracker/plugin-behavior`，默认快照 50~200
+
+### 生产环境推荐默认值
+
+```ts
+const tracker = init({
+  debug: false,
+  sampleRate: 0.5,
+  batchSize: 50,
+  sendInterval: 5000,
+  maxConcurrentRequests: 2,
+  rateLimitPerSec: 3,
+  maxRetry: 5,
+  backoffBaseMs: 1000,
+  backoffMaxMs: 30000,
+  behavior: { core: true, maxSize: 200, maxAge: 300000 },
+});
+```
