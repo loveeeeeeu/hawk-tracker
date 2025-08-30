@@ -12,15 +12,15 @@ const monitorConfig = {
   appVersion: '1.0.0', // 应用版本
 
   // 调试配置
-  debug: process.env.NODE_ENV === 'development', // 调试模式
+  debug: false, // 关闭调试模式，减少日志输出
   sampleRate: 1.0, // 采样率 100%
 
   // 数据发送配置
   batchSize: 1, // 批量上报大小 - 临时改为1，立即上报
-  sendInterval: 1000, // 上报间隔 - 临时改为1秒
-  maxRetry: 3, // 最大重试次数
-  backoffBaseMs: 1000, // 退避基础时间
-  backoffMaxMs: 10000, // 退避最大时间
+  sendInterval: 200, // 上报间隔 - 临时改为1秒
+  maxRetry: 2, // 最大重试次数
+  backoffBaseMs: 500, // 退避基础时间
+  backoffMaxMs: 3000, // 退避最大时间
   maxConcurrentRequests: 3, // 最大并发请求数
   offlineStorageKey: 'hawk_tracker_queue', // 离线存储键名
 
@@ -44,7 +44,7 @@ const monitorConfig = {
     core: true, // 启用行为栈管理
     maxSize: 100, // 最大事件数量
     maxAge: 5 * 60 * 1000, // 最大事件年龄 5分钟
-    debug: process.env.NODE_ENV === 'development', // 行为栈调试模式
+    debug: false, // 关闭行为栈调试模式
 
     // 点击事件配置
     click: {
@@ -215,8 +215,10 @@ export function trackError(error: Error, extra?: any) {
       timestamp: Date.now(),
       url: typeof window !== 'undefined' ? window.location.href : '',
       page: getCurrentPage(),
+      isImmediate: true, // 关键：立即上报优先级
       ...extra,
     });
+    flush();
   } catch (err) {
     console.error('❌ 错误上报失败:', err);
   }
