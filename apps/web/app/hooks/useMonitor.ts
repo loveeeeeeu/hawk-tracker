@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { getMonitor, trackError, trackEvent } from '../monitor';
 

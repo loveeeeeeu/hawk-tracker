@@ -20,7 +20,9 @@ export interface UseServerWatchOptions {
 // 默认 flag：错误总数 + 最新一条 receivedAt
 async function defaultErrorsFlag(projectId: string): Promise<string> {
   try {
-    const sRes = await fetch(`http://localhost:3001/api/stats?projectId=${projectId}`);
+    const sRes = await fetch(
+      `http://localhost:3001/api/stats?projectId=${projectId}`,
+    );
     const sJson = await sRes.json();
     const count = sJson?.data?.errors ?? 0;
 
@@ -55,7 +57,7 @@ export function useServerWatch({
   // 使用useRef存储稳定的函数引用
   const onChangeRef = useRef(onChange);
   const getFlagRef = useRef(getFlag);
-  
+
   // 更新ref
   onChangeRef.current = onChange;
   getFlagRef.current = getFlag;
@@ -139,10 +141,12 @@ export function useServerWatch({
     const wake = () => {
       if (!projectId) return;
       clearTimer();
-      lastFlagRef.current = '';  // 让下一次 tick 立即 initialFetch
+      lastFlagRef.current = ''; // 让下一次 tick 立即 initialFetch
       timerRef.current = window.setTimeout(tick, 0);
     };
-    window.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
+    window.addEventListener('visibilitychange', () => {
+      if (!document.hidden) wake();
+    });
     window.addEventListener('focus', wake);
     return () => {
       window.removeEventListener('focus', wake);
@@ -151,18 +155,17 @@ export function useServerWatch({
 
   // 修复useEffect，确保正确清理
   useEffect(() => {
-    
     // 先停止之前的轮询
     stop();
-    
+
     // 重置状态
     lastFlagRef.current = '';
-    
+
     // 如果有projectId，开始新的轮询
     if (projectId) {
       start();
     }
-    
+
     // 清理函数
     return () => {
       stop();

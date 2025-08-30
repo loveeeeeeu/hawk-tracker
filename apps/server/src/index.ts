@@ -26,7 +26,11 @@ app.use(async (ctx, next) => {
     const ct = String(ctx.headers['content-type'] || '');
 
     async function tryJSON(buf: Buffer) {
-      try { return JSON.parse(buf.toString('utf8')); } catch { return null; }
+      try {
+        return JSON.parse(buf.toString('utf8'));
+      } catch {
+        return null;
+      }
     }
 
     let parsed: any = null;
@@ -41,7 +45,9 @@ app.use(async (ctx, next) => {
     }
 
     if (!parsed && raw.length > 2 && raw[0] === 0x1f && raw[1] === 0x8b) {
-      try { parsed = await tryJSON(await gunzipAsync(raw)); } catch {}
+      try {
+        parsed = await tryJSON(await gunzipAsync(raw));
+      } catch {}
     }
     if (!parsed) parsed = await tryJSON(raw);
 

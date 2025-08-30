@@ -326,7 +326,10 @@ export class DataSender {
     }
 
     // 数据大小超过 64KB，直接 fetch
-    if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+    if (
+      typeof document !== 'undefined' &&
+      document.visibilityState === 'visible'
+    ) {
       const response = await fetch(this.config.dsn, {
         method: 'POST',
         headers: {
@@ -345,7 +348,10 @@ export class DataSender {
     // 先尝试 sendBeacon，失败则降级 fetch
     let success = false;
     try {
-      success = (navigator as any).sendBeacon(this.config.dsn, compressedPayload as any);
+      success = (navigator as any).sendBeacon(
+        this.config.dsn,
+        compressedPayload as any,
+      );
     } catch (e) {
       success = false;
     }

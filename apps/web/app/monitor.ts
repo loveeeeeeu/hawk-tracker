@@ -215,7 +215,7 @@ export function trackError(error: Error, extra?: any) {
       timestamp: Date.now(),
       url: typeof window !== 'undefined' ? window.location.href : '',
       page: getCurrentPage(),
-      isImmediate: true,      // 关键：立即上报优先级
+      isImmediate: true, // 关键：立即上报优先级
       ...extra,
     });
     flush();
